@@ -1,0 +1,4 @@
+﻿<ViewExtensionDefinition>
+  <AssemblyPath>..\bin\CapturefineryViewExtension.dll</AssemblyPath>
+  <TypeName>CapturefineryViewExtension.CapturefineryViewExtension</TypeName>
+</ViewExtensionDefinition>

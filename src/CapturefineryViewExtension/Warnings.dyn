@@ -1,0 +1,252 @@
+{
+  "Uuid": "786205c1-d958-4672-b65c-7c6457b36499",
+  "IsCustomNode": false,
+  "Description": null,
+  "Name": "Warnings",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Autodesk.DesignScript.Geometry.Arc.ByBestFitThroughPoints@Autodesk.DesignScript.Geometry.Point[]",
+      "Id": "99b30f4b70784744bd025f97a28bd56d",
+      "Inputs": [
+        {
+          "Id": "42ab320a26a94c699f61aa526d6a605a",
+          "Name": "points",
+          "Description": "Points to fit\n\nPoint[]",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "da50ff7e04ff4ef48d2960c18dbac53e",
+          "Name": "Arc",
+          "Description": "Arc",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Create an arc that best approximates a collection of points\n\nArc.ByBestFitThroughPoints (points: Point[]): Arc"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "0;",
+      "Id": "1cd7083b338241098286d06cd13ef363",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "ab5f524df795486193e9de55a5948cc8",
+          "Name": "",
+          "Description": "Value of expression at line 1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows for DesignScript code to be authored directly"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Autodesk.DesignScript.Geometry.Circle.ByCenterPointRadius@Autodesk.DesignScript.Geometry.Point,double",
+      "Id": "171d9b7bf04c46979189d389d475201c",
+      "Inputs": [
+        {
+          "Id": "da4abb24b3714f09a17f9db8d1ef5a6e",
+          "Name": "centerPoint",
+          "Description": "Point\nDefault value : Autodesk.DesignScript.Geometry.Point.ByCoordinates(0, 0, 0)",
+          "UsingDefaultValue": true,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "80f874ce044b4590b56e852a606f266c",
+          "Name": "radius",
+          "Description": "double\nDefault value : 1",
+          "UsingDefaultValue": true,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "35d60da3fad54a4094bcd56c13d91ecd",
+          "Name": "Circle",
+          "Description": "Circle",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Creates a Circle with input center Point and radius in the world XY plane, with world Z as normal.\n\nCircle.ByCenterPointRadius (centerPoint: Point = Autodesk.DesignScript.Geometry.Point.ByCoordinates(0, 0, 0), radius: double = 1): Circle"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "NodeType": "FunctionNode",
+      "FunctionSignature": "Autodesk.DesignScript.Geometry.Cone.ByPointsRadius@Autodesk.DesignScript.Geometry.Point,Autodesk.DesignScript.Geometry.Point,double",
+      "Id": "2bd1c6c16e7c4aa291e6a06deaff3ebe",
+      "Inputs": [
+        {
+          "Id": "0805c2afba754345bcf98e09ced2a877",
+          "Name": "startPoint",
+          "Description": "Point\nDefault value : Autodesk.DesignScript.Geometry.Point.ByCoordinates(0, 0, 0)",
+          "UsingDefaultValue": true,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "ca9e4f1aec3748438d54f7b565a5885a",
+          "Name": "endPoint",
+          "Description": "Point\nDefault value : Autodesk.DesignScript.Geometry.Point.ByCoordinates(0, 0, 1)",
+          "UsingDefaultValue": true,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "ed65fefa7bf5443598a057e00cd628f2",
+          "Name": "startRadius",
+          "Description": "double\nDefault value : 1",
+          "UsingDefaultValue": true,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "376188f3e7a34e12bd8cf63438afcaed",
+          "Name": "Cone",
+          "Description": "Cone",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Auto",
+      "Description": "Create a Cone with given base radius at start Point, extending to a apex at end Point.\n\nCone.ByPointsRadius (startPoint: Point = Autodesk.DesignScript.Geometry.Point.ByCoordinates(0, 0, 0), endPoint: Point = Autodesk.DesignScript.Geometry.Point.ByCoordinates(0, 0, 1), startRadius: double = 1): Cone"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "ab5f524df795486193e9de55a5948cc8",
+      "End": "42ab320a26a94c699f61aa526d6a605a",
+      "Id": "9ad81327bba54c7f8ad2db0ff6a9bc73"
+    },
+    {
+      "Start": "ab5f524df795486193e9de55a5948cc8",
+      "End": "da4abb24b3714f09a17f9db8d1ef5a6e",
+      "Id": "c68824f9d03e41d69968af5f2ed53997"
+    },
+    {
+      "Start": "ab5f524df795486193e9de55a5948cc8",
+      "End": "80f874ce044b4590b56e852a606f266c",
+      "Id": "7bb921c3faa1484ea77d43779ab78e72"
+    },
+    {
+      "Start": "ab5f524df795486193e9de55a5948cc8",
+      "End": "0805c2afba754345bcf98e09ced2a877",
+      "Id": "eaae0ee6525c41abb40b09b8e593887e"
+    },
+    {
+      "Start": "ab5f524df795486193e9de55a5948cc8",
+      "End": "ca9e4f1aec3748438d54f7b565a5885a",
+      "Id": "944df00d4e6c4c5680cab601f77e0953"
+    },
+    {
+      "Start": "ab5f524df795486193e9de55a5948cc8",
+      "End": "ed65fefa7bf5443598a057e00cd628f2",
+      "Id": "c2d255a808174a7bad561c13e1e77fd1"
+    }
+  ],
+  "Dependencies": [],
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.0.1.5055",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "Background Preview",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "NodeViews": [
+      {
+        "ShowGeometry": true,
+        "Name": "Arc.ByBestFitThroughPoints",
+        "Id": "99b30f4b70784744bd025f97a28bd56d",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 219.65445026178008,
+        "Y": 111.34031413612564
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Code Block",
+        "Id": "1cd7083b338241098286d06cd13ef363",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 3.0314136125654159,
+        "Y": 356.10994764397907
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Circle.ByCenterPointRadius",
+        "Id": "171d9b7bf04c46979189d389d475201c",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 283.86387434554979,
+        "Y": 316.282722513089
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Cone.ByPointsRadius",
+        "Id": "2bd1c6c16e7c4aa291e6a06deaff3ebe",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 369.93717277486917,
+        "Y": 536.80628272251283
+      }
+    ],
+    "Annotations": [],
+    "X": 180.30366492146607,
+    "Y": -48.387434554973822,
+    "Zoom": 1.0
+  }
+}
