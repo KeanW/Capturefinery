@@ -20,8 +20,10 @@ using System.Media;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 
 namespace CapturefineryViewExtension
 {
@@ -51,7 +53,7 @@ namespace CapturefineryViewExtension
     private DynamoViewModel _dynamoViewModel;
     private string _file = "";
     private bool _waiting = false;
-    private List<System.Drawing.Bitmap> _images;
+    private List<Bitmap> _images;
 
     [System.Runtime.InteropServices.DllImport("gdi32.dll")]
     public static extern bool DeleteObject(IntPtr hObject);
@@ -63,7 +65,7 @@ namespace CapturefineryViewExtension
       _readyParams = p;
       _dynamoViewModel = dynamoVM;
       _file = p.CurrentWorkspaceModel.FileName;
-      _images = new List<System.Drawing.Bitmap>();
+      _images = new List<Bitmap>();
     }
 
     public void Dispose()
@@ -223,7 +225,7 @@ namespace CapturefineryViewExtension
       _dynamoViewModel.ExecuteCommand(cmd);
     }
 
-    private System.Drawing.Bitmap SaveScreenshot(string file)
+    private Bitmap SaveScreenshot(string file)
     {
       var bitmap = new Bitmap(Screen.PrimaryScreen.Bounds.Width,
                               Screen.PrimaryScreen.Bounds.Height);
@@ -239,9 +241,11 @@ namespace CapturefineryViewExtension
       return bitmap;
     }
 
-    private void SaveAnimation(IEnumerable<System.Drawing.Bitmap> images, string path, int? width = null)
+    private void SaveAnimation(IEnumerable<Bitmap> images, string path, int? width = null)
     {
-      IEnumerable<System.Drawing.Bitmap> smallImages = null;
+      // If a width has been provided, scale the source images down to that width
+
+      IEnumerable<Bitmap> smallImages = null;
 
       if (width != null && width.HasValue)
       {
@@ -261,7 +265,7 @@ namespace CapturefineryViewExtension
       foreach (var bmpImage in images)
       {
         var bmp = bmpImage.GetHbitmap();
-        var src = System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(
+        var src = Imaging.CreateBitmapSourceFromHBitmap(
             bmp,
             IntPtr.Zero,
             Int32Rect.Empty,
@@ -298,7 +302,7 @@ namespace CapturefineryViewExtension
     private void DoEvents()
     {
       System.Windows.Application.Current.Dispatcher.Invoke(
-        System.Windows.Threading.DispatcherPriority.Background, new Action(delegate { })
+        DispatcherPriority.Background, new Action(delegate { })
       );
     }
   }
