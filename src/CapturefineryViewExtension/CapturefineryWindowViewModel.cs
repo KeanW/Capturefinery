@@ -136,7 +136,7 @@ namespace CapturefineryViewExtension
 
       // Optionally choose a max number of solutions to capture
 
-      int? max = 5;
+      int? max = null;
 
       var runs = max != null && max.HasValue ? hof.solutions.Take<string[]>(max.Value) : hof.solutions;
       foreach (var parameters in runs)
