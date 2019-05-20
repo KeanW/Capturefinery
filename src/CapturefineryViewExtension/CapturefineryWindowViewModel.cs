@@ -52,8 +52,6 @@ namespace CapturefineryViewExtension
     private ReadyParams _readyParams;
     private DynamoViewModel _dynamoViewModel;
     private string _file = "";
-    private bool _waiting = false;
-    private List<Bitmap> _images;
 
     [System.Runtime.InteropServices.DllImport("gdi32.dll")]
     public static extern bool DeleteObject(IntPtr hObject);
@@ -65,15 +63,10 @@ namespace CapturefineryViewExtension
       _readyParams = p;
       _dynamoViewModel = dynamoVM;
       _file = p.CurrentWorkspaceModel.FileName;
-      _images = new List<Bitmap>();
     }
 
     public void Dispose()
     {
-      foreach (var image in _images)
-      {
-        image.Dispose();
-      }
     }
 
     public ObservableCollection<StudyInfo> RefineryTasks
@@ -111,9 +104,10 @@ namespace CapturefineryViewExtension
 
     public async Task RunTasks(StudyInfo study)
     {
-      _waiting = false;
-      _images.Clear();
+      bool waiting = false;
       int counter = 0;
+      var images = new List<Bitmap>();
+      var runsWithErrors = new List<int>();
 
       var folder = study.Folder + "\\screenshots";
       if (!System.IO.Directory.Exists(folder))
@@ -127,9 +121,20 @@ namespace CapturefineryViewExtension
           DoEvents();
           await Task.Delay(3000);
 
-          _waiting = false;
+          waiting = false;
 
-          _images.Add(SaveScreenshot(folder + "\\" + counter++.ToString() + ".jpg"));
+          images.Add(SaveScreenshot(folder + "\\" + counter.ToString() + ".jpg"));
+
+          var errorNodes =
+            (from n in _readyParams.CurrentWorkspaceModel.Nodes
+             where n.State != ElementState.Active && n.State != ElementState.Dead
+             select n);
+          if (errorNodes.Count<NodeModel>() > 0)
+          {
+            runsWithErrors.Add(counter);
+          }
+
+          counter++;
         };
 
       var hof = GetHallOfFame(study);
@@ -148,11 +153,11 @@ namespace CapturefineryViewExtension
           SetDynamoInputParameter(nodeMap, hof.variables[i], parameters[hof.goals.Length + i]);
         }
 
-        _waiting = true;
+        waiting = true;
 
         StartDynamoRun();
 
-        while (_waiting)
+        while (waiting)
         {
           await Task.Delay(1000);
         }
@@ -160,15 +165,43 @@ namespace CapturefineryViewExtension
 
       await Task.Delay(5000);
 
-      SaveAnimation(_images, folder + "\\animation.gif");
-      SaveAnimation(_images, folder + "\\animation-small.gif", 1000);
-      SaveAnimation(_images, folder + "\\animation-tiny.gif", 500);
+      SaveAnimation(images, folder + "\\animation.gif");
+      SaveAnimation(images, folder + "\\animation-small.gif", 1000);
+      SaveAnimation(images, folder + "\\animation-tiny.gif", 500);
+
+      foreach (var image in images)
+      {
+        image.Dispose();
+      }
+
+      // If errors were found in any of the runs, create a new run with just the problematic runs
+
+      const string errorSuffix = "-errors";
+      if (runsWithErrors.Count > 0 && !study.Folder.EndsWith(errorSuffix))
+      {
+        SaveFilteredHallOfFame(study, study.Folder + errorSuffix, runsWithErrors);
+        RaisePropertyChanged("RefineryTasks");
+      }
     }
 
     private HallOfFame GetHallOfFame(StudyInfo study)
     {
       var fof = JsonConvert.DeserializeObject<FileOfFame>(File.ReadAllText(study.Folder + "\\RefineryResults.json"));
       return fof.hallOfFame;
+    }
+
+    private void SaveFilteredHallOfFame(StudyInfo study, string folder, List<int> subset)
+    {
+      var fof = JsonConvert.DeserializeObject<FileOfFame>(File.ReadAllText(study.Folder + "\\RefineryResults.json"));
+      var sols = fof.hallOfFame.solutions;
+      var solutionSubset = new string[subset.Count][];
+      for (int i = 0; i < subset.Count; i++)
+      {
+        solutionSubset[i] = sols[subset[i]];
+      }
+      fof.hallOfFame.solutions = solutionSubset;
+      System.IO.Directory.CreateDirectory(folder);
+      File.WriteAllText(folder + "\\RefineryResults.json", JsonConvert.SerializeObject(fof));
     }
 
     private Dictionary<string, NodeModel> GetDynamoNodesForInputParameters(string[] variables, IEnumerable<NodeModel> nodes)
