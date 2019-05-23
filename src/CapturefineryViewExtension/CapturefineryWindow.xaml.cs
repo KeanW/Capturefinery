@@ -12,7 +12,6 @@ namespace CapturefineryViewExtension
   {
     private StudyInfo _study;
     private HallOfFame _hof;
-    private int _items;
 
     public CapturefineryWindow()
     {
@@ -22,7 +21,6 @@ namespace CapturefineryViewExtension
       TaskOptions.Height = 0;
       _study = null;
       _hof = null;
-      _items = 0;
     }
 
     private async void Grid_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -38,10 +36,11 @@ namespace CapturefineryViewExtension
         if (_study != null && viewModel != null)
         {
           _hof = viewModel.GetHallOfFame(_study);
-          _items = _hof.solutions.Length;
-          TaskLabel.Content = string.Format("Selected task contains {0} items.", _items);
-          StartText.Text = "0";
-          ItemsText.Text = _items.ToString();
+          var max = _hof.solutions.Length;
+          viewModel.MaxItems = max;
+          viewModel.Start = 0;
+          viewModel.Items = max;
+          TaskLabel.Content = string.Format("Selected study contains {0} design{1}.", max, max == 1 ? "" : "s");
         }
       }
     }
@@ -49,12 +48,13 @@ namespace CapturefineryViewExtension
     private async void ExecuteButton_Click(object sender, RoutedEventArgs e)
     {
       var viewModel = MainGrid.DataContext as CapturefineryWindowViewModel;
-      if (_study != null && viewModel != null)
+      if (
+        _study != null && viewModel != null
+      )
       {
-        var errors = ErrorCheck.IsChecked.HasValue ? ErrorCheck.IsChecked.Value : false;
         this.Focus();
         this.Hide();
-        await viewModel.RunTasks(_study, Int32.Parse(StartText.Text), Int32.Parse(ItemsText.Text), errors, _hof);
+        await viewModel.RunTasks(_study, _hof);
         this.Show();
         this.Focus();
       }

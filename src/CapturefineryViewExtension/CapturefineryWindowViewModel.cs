@@ -19,6 +19,7 @@ using System.Linq;
 using System.Media;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -56,6 +57,55 @@ namespace CapturefineryViewExtension
     [System.Runtime.InteropServices.DllImport("gdi32.dll")]
     public static extern bool DeleteObject(IntPtr hObject);
 
+    private int _start;
+    private int _items;
+    private int _maxItems;
+    private bool _captureErrors;
+
+    public int Start
+    {
+      get { return _start; }
+      set
+      {
+        if (value < 0 || value >= _maxItems)
+        {
+          throw new ArgumentException("Start must be greater than or equal to zero and less than the maximum number of items.");
+        }
+        _start = value;
+        RaisePropertyChanged("Start");
+      }
+    }
+
+    public int Items
+    {
+      get { return _items; }
+      set
+      {
+        if (value < 0 || value > _maxItems)
+        {
+          throw new ArgumentException("Items must be greater than or equal to zero and less than or equal to the maximum number of items.");
+        }
+        _items = value;
+        RaisePropertyChanged("Items");
+      }
+    }
+
+    public int MaxItems
+    {
+      get { return _maxItems; }
+      set { _maxItems = value; }
+    }
+
+    public bool CaptureErrors
+    {
+      get { return _captureErrors; }
+      set
+      {
+        _captureErrors = value;
+        RaisePropertyChanged("CaptureErrors");
+      }
+    }
+
     // Construction & disposal
 
     public CapturefineryWindowViewModel(ReadyParams p, DynamoViewModel dynamoVM)
@@ -63,6 +113,7 @@ namespace CapturefineryViewExtension
       _readyParams = p;
       _dynamoViewModel = dynamoVM;
       _file = p.CurrentWorkspaceModel.FileName;
+      _captureErrors = true;
     }
 
     public void Dispose()
@@ -102,87 +153,119 @@ namespace CapturefineryViewExtension
       return new ObservableCollection<StudyInfo>(nodeList);
     }
 
-    public async Task RunTasks(StudyInfo study, int start, int items, bool trackErrors, HallOfFame hof = null)
+    public async Task RunTasks(StudyInfo study, HallOfFame hof = null)
     {
-      bool waiting = false;
-      int counter = start;
-      var images = new List<Bitmap>();
-      var runsWithErrors = new List<int>();
-
-      var folder = study.Folder + "\\screenshots";
-      if (!System.IO.Directory.Exists(folder))
+      if (
+        Start >= 0 && Start < _maxItems &&
+        Items > 0 && Items <= _maxItems &&
+        Start + Items <= _maxItems
+      )
       {
-        System.IO.Directory.CreateDirectory(folder);
-      }
+        bool waiting = false;
+        int counter = Start;
+        var images = new List<Bitmap>();
+        var errorImages = new List<Bitmap>();
+        var runsWithErrors = new List<int>();
 
-      Dynamo.Events.ExecutionEvents.GraphPostExecution +=
-        async (e) =>
+        var folder = study.Folder + "\\screenshots";
+        if (!System.IO.Directory.Exists(folder))
         {
-          DoEvents();
-          await Task.Delay(3000);
+          System.IO.Directory.CreateDirectory(folder);
+        }
 
-          waiting = false;
-
-          images.Add(SaveScreenshot(folder + "\\" + counter.ToString() + ".jpg"));
-
-          if (trackErrors)
+        Dynamo.Events.ExecutionEvents.GraphPostExecution +=
+          async (e) =>
           {
-            var errorNodes =
-              (from n in _readyParams.CurrentWorkspaceModel.Nodes
-               where n.State != ElementState.Active && n.State != ElementState.Dead
-               select n);
-            if (errorNodes.Count<NodeModel>() > 0)
+            DoEvents();
+            await Task.Delay(3000);
+
+            waiting = false;
+
+            var errorSuffix = "";
+            if (_captureErrors)
             {
-              runsWithErrors.Add(counter);
+              var errorNodes =
+                (from n in _readyParams.CurrentWorkspaceModel.Nodes
+                 where n.State != ElementState.Active && n.State != ElementState.Dead
+                 select n);
+              if (errorNodes.Count<NodeModel>() > 0)
+              {
+                errorSuffix = "-error";
+                runsWithErrors.Add(counter);
+              }
             }
+
+            var img = SaveScreenshot(folder + "\\" + counter.ToString() + errorSuffix + ".jpg");
+            if (errorSuffix != "")
+            {
+              errorImages.Add(img);
+            }
+            else
+            {
+              images.Add(img);
+            }
+
+            counter++;
+          };
+
+        if (hof == null)
+        {
+          hof = GetHallOfFame(study);
+        }
+
+        var nodeMap = GetDynamoNodesForInputParameters(hof.variables, _readyParams.CurrentWorkspaceModel.Nodes);
+
+        for (int i = Start; i < Start + Items; i++)
+        {
+          var parameters = hof.solutions[i];
+          for (var j = 0; j < hof.variables.Length; j++)
+          {
+            SetDynamoInputParameter(nodeMap, hof.variables[j], parameters[hof.goals.Length + j]);
           }
 
-          counter++;
-        };
+          waiting = true;
 
-      if (hof == null)
-      {
-        hof = GetHallOfFame(study);
-      }
+          StartDynamoRun();
 
-      var nodeMap = GetDynamoNodesForInputParameters(hof.variables, _readyParams.CurrentWorkspaceModel.Nodes);
-
-      for (int i = start; i < start + items; i++)
-      {
-        var parameters = hof.solutions[i];
-        for (var j = 0; j < hof.variables.Length; j++)
-        {
-          SetDynamoInputParameter(nodeMap, hof.variables[j], parameters[hof.goals.Length + j]);
+          while (waiting)
+          {
+            await Task.Delay(1000);
+          }
         }
 
-        waiting = true;
+        await Task.Delay(5000);
 
-        StartDynamoRun();
-
-        while (waiting)
+        if (images.Count > 0)
         {
-          await Task.Delay(1000);
+          SaveAnimation(images, folder + "\\animation.gif");
+          SaveAnimation(images, folder + "\\animation-small.gif", 1000);
+          SaveAnimation(images, folder + "\\animation-tiny.gif", 500);
         }
-      }
 
-      await Task.Delay(5000);
+        if (errorImages.Count > 0)
+        {
+          SaveAnimation(errorImages, folder + "\\animation-errors.gif");
+          SaveAnimation(errorImages, folder + "\\animation-errors-small.gif", 1000);
+          SaveAnimation(errorImages, folder + "\\animation-errors-tiny.gif", 500);
+        }
 
-      SaveAnimation(images, folder + "\\animation.gif");
-      SaveAnimation(images, folder + "\\animation-small.gif", 1000);
-      SaveAnimation(images, folder + "\\animation-tiny.gif", 500);
+        foreach (var image in images)
+        {
+          image.Dispose();
+        }
+        foreach (var image in errorImages)
+        {
+          image.Dispose();
+        }
 
-      foreach (var image in images)
-      {
-        image.Dispose();
-      }
+        // If errors were found in any of the runs, create a new run with just the problematic runs
 
-      // If errors were found in any of the runs, create a new run with just the problematic runs
-
-      const string errorSuffix = "-errors";
-      if (trackErrors && runsWithErrors.Count > 0 && !study.Folder.EndsWith(errorSuffix))
-      {
-        SaveFilteredHallOfFame(study, study.Folder + errorSuffix, runsWithErrors);
-        RaisePropertyChanged("RefineryTasks");
+        const string errorsSuffix = "-errors";
+        if (_captureErrors && runsWithErrors.Count > 0 && !study.Folder.EndsWith(errorsSuffix))
+        {
+          SaveFilteredHallOfFame(study, study.Folder + errorsSuffix, runsWithErrors);
+          RaisePropertyChanged("RefineryTasks");
+        }
       }
     }
 
