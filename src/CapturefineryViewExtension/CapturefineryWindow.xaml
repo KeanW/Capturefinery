@@ -5,58 +5,76 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
   xmlns:local="clr-namespace:CapturefineryViewExtension"
-  mc:Ignorable="d" 
-  d:DesignHeight="300"
-  d:DesignWidth="300"
-  Width="300"
-  Height="500"
+  mc:Ignorable="d"
+  Width="340"
+  MinWidth="300"
+  Height="395.653"
+  MinHeight="220"
   FontSize="13"
   FontFamily="Artifakt Element"
   Title="Study List"
   ShowInTaskbar="False" WindowStyle="ToolWindow">
-  <DataGrid
-    Name="MainGrid"
-    ItemsSource="{Binding RefineryTasks}"
-    HeadersVisibility="Column"
-    AutoGenerateColumns="False"
-    IsReadOnly="True"
-    Background="#353535"
-    BorderBrush="#353535"
-    Foreground="#A9A9A9"
-    GridLinesVisibility="None"
-    CanUserReorderColumns="False"
-    CanUserResizeColumns="False"
-    SelectionChanged="Grid_SelectionChanged"
-    SelectionMode="Single">
-    <DataGrid.Columns>
-      <DataGridTextColumn Header="#" Binding="{Binding ID}" CanUserReorder="False"/>
-      <DataGridTextColumn Header="Name" Binding="{Binding Name}" CanUserReorder="False"/>
-    </DataGrid.Columns>
-    <DataGrid.ItemContainerStyle>
-      <Style TargetType="DataGridRow">
-        <Setter Property="Background" Value="#333"/>
-        <Setter Property="Foreground" Value="#AAA"/>
-      </Style>
-    </DataGrid.ItemContainerStyle>
-    <DataGrid.Resources>
-      <Style TargetType="DataGridCell">
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Background" Value="#333"/>
-        <Setter Property="Foreground" Value="#AAA"/>
-        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-        <Style.Triggers>
-          <Trigger Property="IsSelected" Value="True">
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Background" Value="#333"/>
-            <Setter Property="Foreground" Value="White"/>
-          </Trigger>
-        </Style.Triggers>
-      </Style>
-      <Style TargetType="{x:Type DataGridColumnHeader}">
-        <Setter Property="Background" Value="#222"/>
-        <Setter Property="Foreground" Value="#AAA"/>
-        <Setter Property="FontFamily" Value="Artifakt Legend Medium"/>
-      </Style>
-    </DataGrid.Resources>
-  </DataGrid>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" MinWidth="300"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <DataGrid
+            Name="MainGrid"
+            ItemsSource="{Binding RefineryTasks}"
+            HeadersVisibility="Column"
+            AutoGenerateColumns="False"
+            IsReadOnly="True"
+            Background="#353535"
+            BorderBrush="#353535"
+            Foreground="#A9A9A9"
+            GridLinesVisibility="None"
+            CanUserReorderColumns="False"
+            CanUserResizeColumns="False"
+            SelectionChanged="Grid_SelectionChanged"
+            SelectionMode="Single">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="#" Binding="{Binding ID}" CanUserReorder="False"/>
+                <DataGridTextColumn Header="Name" Binding="{Binding Name}" CanUserReorder="False"/>
+            </DataGrid.Columns>
+            <DataGrid.ItemContainerStyle>
+                <Style TargetType="DataGridRow">
+                    <Setter Property="Background" Value="#333"/>
+                    <Setter Property="Foreground" Value="#AAA"/>
+                </Style>
+            </DataGrid.ItemContainerStyle>
+            <DataGrid.Resources>
+                <Style TargetType="DataGridCell">
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="Background" Value="#333"/>
+                    <Setter Property="Foreground" Value="#AAA"/>
+                    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                    <Style.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="Background" Value="#333"/>
+                            <Setter Property="Foreground" Value="White"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+                <Style TargetType="{x:Type DataGridColumnHeader}">
+                    <Setter Property="Background" Value="#222"/>
+                    <Setter Property="Foreground" Value="#AAA"/>
+                    <Setter Property="FontFamily" Value="Artifakt Legend Medium"/>
+                </Style>
+            </DataGrid.Resources>
+        </DataGrid>
+        <Grid x:Name="TaskOptions" Grid.Row="1" Visibility="Visible" Height="Auto">
+            <Label x:Name="TaskLabel" Content="Selected task contains n items." HorizontalAlignment="Left" Margin="21,19,0,140" VerticalAlignment="Bottom" />
+            <Label x:Name="StartLabel" Content="Index of first item to capture" HorizontalAlignment="Left" Margin="21,51,0,105" VerticalAlignment="Bottom" />
+            <Label x:Name="ItemsLabel" Content="Number of items to capture" HorizontalAlignment="Left" Margin="21,83,0,75" VerticalAlignment="Bottom" />
+            <TextBox x:Name="StartText" Margin="0,55,20,105" TextWrapping="Wrap" Text="0" HorizontalAlignment="Right" Height="24" Width="53" MinWidth="20" MinHeight="24" VerticalAlignment="Bottom" TextAlignment="Right" />
+            <TextBox x:Name="ItemsText" HorizontalAlignment="Right" Margin="0,87,20,75" TextWrapping="Wrap" Text="n" Width="53" Height="24" MinWidth="20" MinHeight="24" VerticalAlignment="Bottom" TextAlignment="Right" />
+            <Button x:Name="ExecuteButton" Content="Execute" Margin="0,0,20,10" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="75" Height="21" MinWidth="75" MinHeight="21" IsDefault="True" Click="ExecuteButton_Click" />
+            <CheckBox x:Name="ErrorCheck" Content="Capture error information" HorizontalAlignment="Left" Margin="27,115,20,45" VerticalAlignment="Bottom" IsChecked="True"/>
+        </Grid>
+    </Grid>
 </Window>

@@ -102,10 +102,10 @@ namespace CapturefineryViewExtension
       return new ObservableCollection<StudyInfo>(nodeList);
     }
 
-    public async Task RunTasks(StudyInfo study)
+    public async Task RunTasks(StudyInfo study, int start, int items, bool trackErrors, HallOfFame hof = null)
     {
       bool waiting = false;
-      int counter = 0;
+      int counter = start;
       var images = new List<Bitmap>();
       var runsWithErrors = new List<int>();
 
@@ -125,32 +125,34 @@ namespace CapturefineryViewExtension
 
           images.Add(SaveScreenshot(folder + "\\" + counter.ToString() + ".jpg"));
 
-          var errorNodes =
-            (from n in _readyParams.CurrentWorkspaceModel.Nodes
-             where n.State != ElementState.Active && n.State != ElementState.Dead
-             select n);
-          if (errorNodes.Count<NodeModel>() > 0)
+          if (trackErrors)
           {
-            runsWithErrors.Add(counter);
+            var errorNodes =
+              (from n in _readyParams.CurrentWorkspaceModel.Nodes
+               where n.State != ElementState.Active && n.State != ElementState.Dead
+               select n);
+            if (errorNodes.Count<NodeModel>() > 0)
+            {
+              runsWithErrors.Add(counter);
+            }
           }
 
           counter++;
         };
 
-      var hof = GetHallOfFame(study);
+      if (hof == null)
+      {
+        hof = GetHallOfFame(study);
+      }
 
       var nodeMap = GetDynamoNodesForInputParameters(hof.variables, _readyParams.CurrentWorkspaceModel.Nodes);
 
-      // Optionally choose a max number of solutions to capture
-
-      int? max = null;
-
-      var runs = max != null && max.HasValue ? hof.solutions.Take<string[]>(max.Value) : hof.solutions;
-      foreach (var parameters in runs)
+      for (int i = start; i < start + items; i++)
       {
-        for (var i = 0; i < hof.variables.Length; i++)
+        var parameters = hof.solutions[i];
+        for (var j = 0; j < hof.variables.Length; j++)
         {
-          SetDynamoInputParameter(nodeMap, hof.variables[i], parameters[hof.goals.Length + i]);
+          SetDynamoInputParameter(nodeMap, hof.variables[j], parameters[hof.goals.Length + j]);
         }
 
         waiting = true;
@@ -177,14 +179,14 @@ namespace CapturefineryViewExtension
       // If errors were found in any of the runs, create a new run with just the problematic runs
 
       const string errorSuffix = "-errors";
-      if (runsWithErrors.Count > 0 && !study.Folder.EndsWith(errorSuffix))
+      if (trackErrors && runsWithErrors.Count > 0 && !study.Folder.EndsWith(errorSuffix))
       {
         SaveFilteredHallOfFame(study, study.Folder + errorSuffix, runsWithErrors);
         RaisePropertyChanged("RefineryTasks");
       }
     }
 
-    private HallOfFame GetHallOfFame(StudyInfo study)
+    public HallOfFame GetHallOfFame(StudyInfo study)
     {
       var fof = JsonConvert.DeserializeObject<FileOfFame>(File.ReadAllText(study.Folder + "\\RefineryResults.json"));
       return fof.hallOfFame;
