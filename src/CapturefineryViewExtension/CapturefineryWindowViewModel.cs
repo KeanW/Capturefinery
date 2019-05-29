@@ -1,5 +1,6 @@
 ﻿using CoreNodeModels.Input;
 using Dynamo.Core;
+using Dynamo.Events;
 using Dynamo.Extensions;
 using Dynamo.Graph.Nodes;
 using Dynamo.Graph.Nodes;
@@ -226,12 +227,12 @@ namespace CapturefineryViewExtension
         InterceptKeys.OnKeyDown += new KeyEventHandler(OnKeyDown);
         InterceptKeys.Start();
 
-        if (CreateAnimations && LoadImages && counter > 0)
+        if (_createAnimations && _loadImages && counter > 0)
         {
           LoadExistingImages(images, _captureErrors ? errorImages : null, folder, 0, counter);
         }
 
-        Dynamo.Events.ExecutionEvents.GraphPostExecution +=
+        ExecutionStateHandler postExecution =
           async (e) =>
           {
             if (!_escapePressed)
@@ -244,6 +245,8 @@ namespace CapturefineryViewExtension
               var isError = false;
               if (_captureErrors)
               {
+                // Does the graph contain any nodes in an error state?
+
                 var errorNodes =
                   (from n in _readyParams.CurrentWorkspaceModel.Nodes
                    where n.State != ElementState.Active && n.State != ElementState.Dead
@@ -268,6 +271,8 @@ namespace CapturefineryViewExtension
               counter++;
             }
           };
+
+        ExecutionEvents.GraphPostExecution += postExecution;
 
         if (hof == null)
         {
@@ -299,18 +304,16 @@ namespace CapturefineryViewExtension
           }
         }
 
-        await Task.Delay(5000);
-
         // Run should be completely finished, at this stage
 
-        if (CreateAnimations && LoadImages && counter < _maxItems)
+        if (_createAnimations && _loadImages && counter < _maxItems)
         {
           LoadExistingImages(images, _captureErrors ? errorImages : null, folder, counter, _maxItems);
         }
 
         if (!_escapePressed)
         {
-          if (CreateAnimations)
+          if (_createAnimations)
           {
             if (images.Count > 0)
             {
@@ -348,6 +351,7 @@ namespace CapturefineryViewExtension
 
         InterceptKeys.Stop();
         InterceptKeys.OnKeyDown -= new KeyEventHandler(OnKeyDown);
+        ExecutionEvents.GraphPostExecution -= postExecution;
       }
     }
 
@@ -369,7 +373,7 @@ namespace CapturefineryViewExtension
             images.Add(image);
           }
         }
-        else if (errors != null)
+        else
         {
           var errName = GetImageFilename(folder, i, true);
           if (File.Exists(errName))
@@ -377,7 +381,14 @@ namespace CapturefineryViewExtension
             var errImage = new Bitmap(errName);
             if (errImage != null)
             {
-              errors.Add(errImage);
+              if (errors != null)
+              {
+                errors.Add(errImage);
+              }
+              else
+              {
+                images.Add(errImage);
+              }
             }
           }
         }
