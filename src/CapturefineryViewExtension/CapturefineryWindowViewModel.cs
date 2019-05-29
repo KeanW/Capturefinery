@@ -17,6 +17,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Media;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -35,6 +36,7 @@ namespace CapturefineryViewExtension
     public string[][] solutions;
     public string[] variables;
   }
+
   public class FileOfFame
   {
     public int currentGeneration;
@@ -47,7 +49,8 @@ namespace CapturefineryViewExtension
     public string task_solver;
     public string endpoint;
   }
-  public class CapturefineryWindowViewModel : NotificationObject, IDisposable
+
+  public class CapturefineryWindowViewModel : NotificationObject, INotifyPropertyChanged, IDisposable
   {
     private ObservableCollection<StudyInfo> _refineryStudies;
     private ReadyParams _readyParams;
@@ -61,6 +64,9 @@ namespace CapturefineryViewExtension
     private int _items;
     private int _maxItems;
     private bool _captureErrors;
+    private bool _createAnimations;
+    private bool _loadImages;
+    private bool _escapePressed;
 
     public int Start
     {
@@ -72,7 +78,7 @@ namespace CapturefineryViewExtension
           throw new ArgumentException("Start must be greater than or equal to zero and less than the maximum number of items.");
         }
         _start = value;
-        RaisePropertyChanged("Start");
+        OnPropertyChanged();
       }
     }
 
@@ -86,14 +92,17 @@ namespace CapturefineryViewExtension
           throw new ArgumentException("Items must be greater than or equal to zero and less than or equal to the maximum number of items.");
         }
         _items = value;
-        RaisePropertyChanged("Items");
+        OnPropertyChanged();
       }
     }
 
     public int MaxItems
     {
       get { return _maxItems; }
-      set { _maxItems = value; }
+      set {
+        _maxItems = value;
+        OnPropertyChanged();
+      }
     }
 
     public bool CaptureErrors
@@ -102,7 +111,37 @@ namespace CapturefineryViewExtension
       set
       {
         _captureErrors = value;
-        RaisePropertyChanged("CaptureErrors");
+        OnPropertyChanged();
+      }
+    }
+
+    public bool CreateAnimations
+    {
+      get { return _createAnimations; }
+      set
+      {
+        _createAnimations = value;
+        OnPropertyChanged();
+      }
+    }
+
+    public bool LoadImages
+    {
+      get { return _loadImages; }
+      set
+      {
+        _loadImages = value;
+        OnPropertyChanged();
+      }
+    }
+
+    public event PropertyChangedEventHandler PropertyChanged;
+
+    public void OnPropertyChanged([CallerMemberName]string propertyName = null)
+    {
+      if (PropertyChanged != null)
+      {
+        PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
       }
     }
 
@@ -114,6 +153,9 @@ namespace CapturefineryViewExtension
       _dynamoViewModel = dynamoVM;
       _file = p.CurrentWorkspaceModel.FileName;
       _captureErrors = true;
+      _createAnimations = true;
+      _loadImages = false;
+      _escapePressed = false;
     }
 
     public void Dispose()
@@ -153,6 +195,14 @@ namespace CapturefineryViewExtension
       return new ObservableCollection<StudyInfo>(nodeList);
     }
 
+    private void OnKeyDown(object sender, KeyEventArgs e)
+    {
+      if (e.KeyCode == Keys.Escape)
+      {
+        _escapePressed = true;
+      }
+    }
+
     public async Task RunTasks(StudyInfo study, HallOfFame hof = null)
     {
       if (
@@ -173,39 +223,50 @@ namespace CapturefineryViewExtension
           System.IO.Directory.CreateDirectory(folder);
         }
 
+        InterceptKeys.OnKeyDown += new KeyEventHandler(OnKeyDown);
+        InterceptKeys.Start();
+
+        if (CreateAnimations && LoadImages && counter > 0)
+        {
+          LoadExistingImages(images, _captureErrors ? errorImages : null, folder, 0, counter);
+        }
+
         Dynamo.Events.ExecutionEvents.GraphPostExecution +=
           async (e) =>
           {
-            DoEvents();
-            await Task.Delay(3000);
-
-            waiting = false;
-
-            var errorSuffix = "";
-            if (_captureErrors)
+            if (!_escapePressed)
             {
-              var errorNodes =
-                (from n in _readyParams.CurrentWorkspaceModel.Nodes
-                 where n.State != ElementState.Active && n.State != ElementState.Dead
-                 select n);
-              if (errorNodes.Count<NodeModel>() > 0)
+              DoEvents();
+              await Task.Delay(3000);
+
+              waiting = false;
+
+              var isError = false;
+              if (_captureErrors)
               {
-                errorSuffix = "-error";
-                runsWithErrors.Add(counter);
+                var errorNodes =
+                  (from n in _readyParams.CurrentWorkspaceModel.Nodes
+                   where n.State != ElementState.Active && n.State != ElementState.Dead
+                   select n);
+                if (errorNodes.Count<NodeModel>() > 0)
+                {
+                  isError = true;
+                  runsWithErrors.Add(counter);
+                }
               }
-            }
 
-            var img = SaveScreenshot(folder + "\\" + counter.ToString() + errorSuffix + ".jpg");
-            if (errorSuffix != "")
-            {
-              errorImages.Add(img);
-            }
-            else
-            {
-              images.Add(img);
-            }
+              var img = SaveScreenshot(GetImageFilename(folder, counter, isError));
+              if (isError)
+              {
+                errorImages.Add(img);
+              }
+              else
+              {
+                images.Add(img);
+              }
 
-            counter++;
+              counter++;
+            }
           };
 
         if (hof == null)
@@ -217,6 +278,11 @@ namespace CapturefineryViewExtension
 
         for (int i = Start; i < Start + Items; i++)
         {
+          if (_escapePressed)
+          {
+            break;
+          }
+
           var parameters = hof.solutions[i];
           for (var j = 0; j < hof.variables.Length; j++)
           {
@@ -235,18 +301,40 @@ namespace CapturefineryViewExtension
 
         await Task.Delay(5000);
 
-        if (images.Count > 0)
+        // Run should be completely finished, at this stage
+
+        if (CreateAnimations && LoadImages && counter < _maxItems)
         {
-          SaveAnimation(images, folder + "\\animation.gif");
-          SaveAnimation(images, folder + "\\animation-small.gif", 1000);
-          SaveAnimation(images, folder + "\\animation-tiny.gif", 500);
+          LoadExistingImages(images, _captureErrors ? errorImages : null, folder, counter, _maxItems);
         }
 
-        if (errorImages.Count > 0)
+        if (!_escapePressed)
         {
-          SaveAnimation(errorImages, folder + "\\animation-errors.gif");
-          SaveAnimation(errorImages, folder + "\\animation-errors-small.gif", 1000);
-          SaveAnimation(errorImages, folder + "\\animation-errors-tiny.gif", 500);
+          if (CreateAnimations)
+          {
+            if (images.Count > 0)
+            {
+              SaveAnimation(images, folder + "\\animation.gif");
+              SaveAnimation(images, folder + "\\animation-small.gif", 1000);
+              SaveAnimation(images, folder + "\\animation-tiny.gif", 500);
+            }
+
+            if (errorImages.Count > 0)
+            {
+              SaveAnimation(errorImages, folder + "\\animation-errors.gif");
+              SaveAnimation(errorImages, folder + "\\animation-errors-small.gif", 1000);
+              SaveAnimation(errorImages, folder + "\\animation-errors-tiny.gif", 500);
+            }
+          }
+
+          // If errors were found in any of the runs, create a new run with just the problematic runs
+
+          const string errorsSuffix = "-errors";
+          if (_captureErrors && runsWithErrors.Count > 0 && !study.Folder.EndsWith(errorsSuffix))
+          {
+            SaveFilteredHallOfFame(study, study.Folder + errorsSuffix, runsWithErrors);
+            RaisePropertyChanged("RefineryTasks");
+          }
         }
 
         foreach (var image in images)
@@ -258,13 +346,40 @@ namespace CapturefineryViewExtension
           image.Dispose();
         }
 
-        // If errors were found in any of the runs, create a new run with just the problematic runs
+        InterceptKeys.Stop();
+        InterceptKeys.OnKeyDown -= new KeyEventHandler(OnKeyDown);
+      }
+    }
 
-        const string errorsSuffix = "-errors";
-        if (_captureErrors && runsWithErrors.Count > 0 && !study.Folder.EndsWith(errorsSuffix))
+    private string GetImageFilename(string folder, int counter, bool isError)
+    {
+      return folder + "\\" + counter.ToString() + (isError ? "-error" : "") + ".jpg";
+    }
+
+    private void LoadExistingImages(List<Bitmap> images, List<Bitmap> errors, string folder, int start, int end)
+    {
+      for (var i = start; i < end; i++)
+      {
+        var name = GetImageFilename(folder, i, false);
+        if (File.Exists(name))
         {
-          SaveFilteredHallOfFame(study, study.Folder + errorsSuffix, runsWithErrors);
-          RaisePropertyChanged("RefineryTasks");
+          var image = new Bitmap(name);
+          if (image != null)
+          {
+            images.Add(image);
+          }
+        }
+        else if (errors != null)
+        {
+          var errName = GetImageFilename(folder, i, true);
+          if (File.Exists(errName))
+          {
+            var errImage = new Bitmap(errName);
+            if (errImage != null)
+            {
+              errors.Add(errImage);
+            }
+          }
         }
       }
     }
@@ -343,18 +458,32 @@ namespace CapturefineryViewExtension
       _dynamoViewModel.ExecuteCommand(cmd);
     }
 
-    private Bitmap SaveScreenshot(string file)
+    private Bitmap SaveScreenshot(string file, bool fullScreen = false)
     {
-      var bitmap = new Bitmap(Screen.PrimaryScreen.Bounds.Width,
-                              Screen.PrimaryScreen.Bounds.Height);
-      using (var g = Graphics.FromImage(bitmap))
+      Bitmap bitmap;
+      if (fullScreen)
       {
-        g.CopyFromScreen(Screen.PrimaryScreen.Bounds.X,
-                         Screen.PrimaryScreen.Bounds.Y,
-                         0, 0,
-                         bitmap.Size,
-                         CopyPixelOperation.SourceCopy);
-        bitmap.Save(file, ImageFormat.Jpeg);
+        bitmap = new Bitmap(Screen.PrimaryScreen.Bounds.Width,
+                                Screen.PrimaryScreen.Bounds.Height);
+        using (var g = Graphics.FromImage(bitmap))
+        {
+          g.CopyFromScreen(Screen.PrimaryScreen.Bounds.X,
+                           Screen.PrimaryScreen.Bounds.Y,
+                           0, 0,
+                           bitmap.Size,
+                           CopyPixelOperation.SourceCopy);
+          bitmap.Save(file, ImageFormat.Jpeg);
+        }
+      }
+      else
+      {
+        System.Windows.Application.Current.Dispatcher.Invoke(
+          () =>
+          {
+            _dynamoViewModel.OnRequestSave3DImage(_dynamoViewModel, new ImageSaveEventArgs(file));
+          }
+        );
+        bitmap = new Bitmap(file);
       }
       return bitmap;
     }

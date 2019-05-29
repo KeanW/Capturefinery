@@ -6,9 +6,9 @@
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
   xmlns:local="clr-namespace:CapturefineryViewExtension"
   mc:Ignorable="d"
-  Width="340"
+  Width="336"
   MinWidth="300"
-  Height="395.653"
+  Height="437.653"
   MinHeight="220"
   FontSize="13"
   FontFamily="Artifakt Element"
@@ -67,13 +67,26 @@
             </DataGrid.Resources>
         </DataGrid>
         <Grid x:Name="TaskOptions" Grid.Row="1" Visibility="Visible" Height="Auto">
-            <Label x:Name="TaskLabel" Content="Selected task contains n items." HorizontalAlignment="Left" Margin="21,19,0,140" VerticalAlignment="Bottom" />
-            <Label x:Name="StartLabel" Content="Index of first item to capture" HorizontalAlignment="Left" Margin="21,51,0,105" VerticalAlignment="Bottom" />
-            <Label x:Name="ItemsLabel" Content="Number of items to capture" HorizontalAlignment="Left" Margin="21,83,0,75" VerticalAlignment="Bottom" />
-            <TextBox x:Name="StartText" Margin="0,55,20,105" TextWrapping="Wrap" Text="{Binding Start,ValidatesOnExceptions=True}" HorizontalAlignment="Right" Height="24" Width="53" MinWidth="20" MinHeight="24" VerticalAlignment="Bottom" TextAlignment="Right" />
-            <TextBox x:Name="ItemsText" Margin="0,87,20,75" TextWrapping="Wrap" Text="{Binding Items,ValidatesOnExceptions=True}" HorizontalAlignment="Right" Width="53" Height="24" MinWidth="20" MinHeight="24" VerticalAlignment="Bottom" TextAlignment="Right" />
+            <Label x:Name="TaskLabel" Content="{Binding MaxItems}" ContentStringFormat="Number of items in selected study: {0}" HorizontalAlignment="Left" Margin="21,19,0,200" VerticalAlignment="Bottom" />
+            <Label x:Name="StartLabel" Content="Index of first item to capture" HorizontalAlignment="Left" Margin="21,51,0,165" VerticalAlignment="Bottom" />
+            <Label x:Name="ItemsLabel" Content="Number of items to capture" HorizontalAlignment="Left" Margin="21,83,0,135" VerticalAlignment="Bottom" />
+            <TextBox x:Name="StartText" Margin="0,55,20,165" TextWrapping="Wrap" Text="{Binding Start,ValidatesOnExceptions=True}" HorizontalAlignment="Right" Height="24" Width="53" MinWidth="20" MinHeight="24" VerticalAlignment="Bottom" TextAlignment="Right" />
+            <TextBox x:Name="ItemsText" Margin="0,87,20,135" TextWrapping="Wrap" Text="{Binding Items,ValidatesOnExceptions=True}" HorizontalAlignment="Right" Width="53" Height="24" MinWidth="20" MinHeight="24" VerticalAlignment="Bottom" TextAlignment="Right" />
             <Button x:Name="ExecuteButton" Content="Capture" Margin="0,0,20,10" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="75" Height="21" MinWidth="75" MinHeight="21" IsDefault="True" Click="ExecuteButton_Click" />
-            <CheckBox x:Name="ErrorCheck" Content="Capture and separate errors" HorizontalAlignment="Left" Margin="27,115,20,45" VerticalAlignment="Bottom" IsChecked="{Binding CaptureErrors}"/>
+            <CheckBox x:Name="ErrorCheck" Content="Capture and separate errors" HorizontalAlignment="Left" Margin="27,115,20,105" VerticalAlignment="Bottom" IsChecked="{Binding CaptureErrors}"/>
+            <CheckBox x:Name="AnimateCheck" Content="Create animations" HorizontalAlignment="Left" Margin="27,115,20,75" VerticalAlignment="Bottom" IsChecked="{Binding CreateAnimations}"/>
+            <CheckBox x:Name="LoadCheck" Content="Load existing images" HorizontalAlignment="Left" Margin="27,115,20,45" VerticalAlignment="Bottom" IsChecked="{Binding LoadImages}">
+                <CheckBox.Style>
+                    <Style TargetType="CheckBox">
+                        <Setter Property="IsEnabled" Value="False"></Setter>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsChecked,ElementName=AnimateCheck}" Value="True">
+                                <Setter Property="IsEnabled" Value="True"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </CheckBox.Style>
+            </CheckBox>
         </Grid>
     </Grid>
 </Window>

@@ -17,6 +17,8 @@ namespace CapturefineryViewExtension
     {
       InitializeComponent();
 
+      // Hide the options pane until something is selected
+
       TaskOptions.Visibility = Visibility.Hidden;
       TaskOptions.Height = 0;
       _study = null;
@@ -30,6 +32,8 @@ namespace CapturefineryViewExtension
       {
         _study = e.AddedItems[0] as StudyInfo;
 
+        // Display the options pane with automatic height
+
         TaskOptions.Visibility = Visibility.Visible;
         TaskOptions.Height = double.NaN;
 
@@ -40,7 +44,6 @@ namespace CapturefineryViewExtension
           viewModel.MaxItems = max;
           viewModel.Start = 0;
           viewModel.Items = max;
-          TaskLabel.Content = string.Format("Selected study contains {0} design{1}.", max, max == 1 ? "" : "s");
         }
       }
     }
