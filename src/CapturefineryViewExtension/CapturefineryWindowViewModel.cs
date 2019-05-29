@@ -122,6 +122,10 @@ namespace CapturefineryViewExtension
       set
       {
         _createAnimations = value;
+        if (!value)
+        {
+          LoadImages = false;
+        }
         OnPropertyChanged();
       }
     }
@@ -167,7 +171,7 @@ namespace CapturefineryViewExtension
     {
       get
       {
-        _refineryStudies = getRefineryTasks(_file);
+        _refineryStudies = GetRefineryTasks(_file);
         return _refineryStudies;
       }
       set
@@ -176,7 +180,7 @@ namespace CapturefineryViewExtension
       }
     }
 
-    public ObservableCollection<StudyInfo> getRefineryTasks(string fileName)
+    public ObservableCollection<StudyInfo> GetRefineryTasks(string fileName)
     {
       var nodeList = new List<StudyInfo>();
 
@@ -306,9 +310,9 @@ namespace CapturefineryViewExtension
 
         // Run should be completely finished, at this stage
 
-        if (_createAnimations && _loadImages && counter < _maxItems)
+        if (_createAnimations && _loadImages && counter + 1 < _maxItems)
         {
-          LoadExistingImages(images, _captureErrors ? errorImages : null, folder, counter, _maxItems);
+          LoadExistingImages(images, _captureErrors ? errorImages : null, folder, counter + 1, _maxItems);
         }
 
         if (!_escapePressed)
