@@ -124,6 +124,8 @@ namespace CapturefineryViewExtension
         _createAnimations = value;
         if (!value)
         {
+          // If toggling animation creation off, clear the loading of images
+
           LoadImages = false;
         }
         OnPropertyChanged();
@@ -228,13 +230,19 @@ namespace CapturefineryViewExtension
           System.IO.Directory.CreateDirectory(folder);
         }
 
+        // Attach a handler to check for the use of Escape
+
         InterceptKeys.OnKeyDown += new KeyEventHandler(OnKeyDown);
         InterceptKeys.Start();
+
+        // Pre-load any existing images that come before the chosen range, if this option was selected
 
         if (_createAnimations && _loadImages && counter > 0)
         {
           LoadExistingImages(images, _captureErrors ? errorImages : null, folder, 0, counter);
         }
+
+        // Define and attach the main post-execution handler
 
         ExecutionStateHandler postExecution =
           async (e) =>
@@ -308,7 +316,7 @@ namespace CapturefineryViewExtension
           }
         }
 
-        // Run should be completely finished, at this stage
+        // Post-load any existing images that come after the chosen range, if this option was selected
 
         if (_createAnimations && _loadImages && counter + 1 < _maxItems)
         {
@@ -379,20 +387,16 @@ namespace CapturefineryViewExtension
         }
         else
         {
+          // Also check for images flagged as errors...
+          // Add these either to the special error list or the main one
+
           var errName = GetImageFilename(folder, i, true);
           if (File.Exists(errName))
           {
             var errImage = new Bitmap(errName);
             if (errImage != null)
             {
-              if (errors != null)
-              {
-                errors.Add(errImage);
-              }
-              else
-              {
-                images.Add(errImage);
-              }
+              (errors == null ? images : errors).Add(errImage);
             }
           }
         }
@@ -492,6 +496,8 @@ namespace CapturefineryViewExtension
       }
       else
       {
+        // We need to perform the capture on the main thread
+
         System.Windows.Application.Current.Dispatcher.Invoke(
           () =>
           {
