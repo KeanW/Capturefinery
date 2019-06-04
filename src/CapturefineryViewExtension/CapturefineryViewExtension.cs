@@ -12,7 +12,13 @@ namespace CapturefineryViewExtension
 
     public void Dispose() {}
 
-    public void Startup(ViewStartupParams p) {}
+    public void Startup(ViewStartupParams p)
+    {
+      ToolTipService.ShowOnDisabledProperty.OverrideMetadata(
+        typeof(Control),
+        new FrameworkPropertyMetadata(true)
+      );
+    }
 
     public void Loaded(ViewLoadedParams p)
     {
@@ -32,8 +38,8 @@ namespace CapturefineryViewExtension
           Owner = p.DynamoWindow
         };
 
-        window.Left = window.Owner.Left + 400;
-        window.Top = window.Owner.Top + 200;
+        window.Left = window.Owner.Left + window.Owner.Width / 2 - window.Width / 2;
+        window.Top = window.Owner.Top + window.Owner.Height / 2 - window.Height / 2;
 
         // Show our modeless window
 
@@ -42,7 +48,9 @@ namespace CapturefineryViewExtension
       p.AddMenuItem(MenuBarType.View, menuItem);
     }
 
-    public void Shutdown() {}
+    public void Shutdown()
+    {
+    }
 
     public string UniqueId
     {

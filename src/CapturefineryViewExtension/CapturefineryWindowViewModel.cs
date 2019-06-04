@@ -64,10 +64,23 @@ namespace CapturefineryViewExtension
     private int _start;
     private int _items;
     private int _maxItems;
+    private double _progress;
     private bool _captureErrors;
     private bool _createAnimations;
     private bool _loadImages;
     private bool _escapePressed;
+    private bool _executeEnabled;
+    private string _executeText;
+    private Dispatcher _dispatcherUIThread;
+    private string _firstSortParameter;
+    private string _secondSortParameter;
+    private string _thirdSortParameter;
+    private string _fourthSortParameter;
+    private List<string> _parameterList;
+
+    const string enableText = "Click here to launch a capture run. It may take some time, but can be canceled.";
+    const string disableText = "Capture canceled; another can be started when current run completes.";
+    public readonly string EmptyComboValue = "   ";
 
     public int Start
     {
@@ -100,7 +113,8 @@ namespace CapturefineryViewExtension
     public int MaxItems
     {
       get { return _maxItems; }
-      set {
+      set
+      {
         _maxItems = value;
         OnPropertyChanged();
       }
@@ -142,6 +156,137 @@ namespace CapturefineryViewExtension
       }
     }
 
+    public double Progress
+    {
+      get { return _progress; }
+      set
+      {
+        _progress = value;
+        OnPropertyChanged();
+      }
+    }
+
+    public bool Escape
+    {
+      get { return _escapePressed; }
+      set
+      {
+        _escapePressed = value;
+        OnPropertyChanged();
+      }
+    }
+
+    public bool ExecuteEnabled
+    {
+      get { return _executeEnabled; }
+      set
+      {
+        _executeEnabled = value;
+        OnPropertyChanged();
+      }
+    }
+
+    public string ExecuteText
+    {
+      get { return _executeText; }
+      set
+      {
+        _executeText = value;
+        OnPropertyChanged();
+      }
+    }
+
+    internal void ClearSortParameters(int start)
+    {
+      if (start <= 0)
+      {
+        FirstSortParameter = null;
+      }
+      if (start <= 1)
+      {
+        SecondSortParameter = null;
+      }
+      if (start <= 2)
+      {
+        ThirdSortParameter = null;
+      }
+      if (start <= 3)
+      {
+        FourthSortParameter = null;
+      }
+    }
+
+    public List<string> ParameterList
+    {
+      get { return _parameterList; }
+      set
+      {
+        _parameterList = value;
+        OnPropertyChanged();
+        OnPropertyChanged(nameof(FirstParameterList));
+        OnPropertyChanged(nameof(SecondParameterList));
+        OnPropertyChanged(nameof(ThirdParameterList));
+        OnPropertyChanged(nameof(FourthParameterList));
+      }
+    }
+
+    public IEnumerable<string> FirstParameterList => ParameterList.Where(o => o != SecondSortParameter && o != ThirdSortParameter && o != FourthSortParameter);
+    public IEnumerable<string> SecondParameterList => ParameterList.Where(o => o != FirstSortParameter && o != ThirdSortParameter && o != FourthSortParameter);
+    public IEnumerable<string> ThirdParameterList => ParameterList.Where(o => o != FirstSortParameter && o != SecondSortParameter && o != FourthSortParameter);
+    public IEnumerable<string> FourthParameterList => ParameterList.Where(o => o != FirstSortParameter && o != SecondSortParameter && o != ThirdSortParameter);
+
+    public string FirstSortParameter
+    {
+      get { return _firstSortParameter; }
+      set
+      {
+        _firstSortParameter = value;
+        OnPropertyChanged();
+        OnPropertyChanged(nameof(SecondParameterList));
+        OnPropertyChanged(nameof(ThirdParameterList));
+        OnPropertyChanged(nameof(FourthParameterList));
+      }
+    }
+
+    public string SecondSortParameter
+    {
+      get { return _secondSortParameter; }
+      set
+      {
+        _secondSortParameter = value;
+        OnPropertyChanged();
+        OnPropertyChanged(nameof(FirstParameterList));
+        OnPropertyChanged(nameof(ThirdParameterList));
+        OnPropertyChanged(nameof(FourthParameterList));
+      }
+    }
+
+    public string ThirdSortParameter
+    {
+      get { return _thirdSortParameter; }
+      set
+      {
+        _thirdSortParameter = value;
+        OnPropertyChanged();
+        OnPropertyChanged(nameof(FirstParameterList));
+        OnPropertyChanged(nameof(SecondParameterList));
+        OnPropertyChanged(nameof(FourthParameterList));
+      }
+    }
+
+    public string FourthSortParameter
+    {
+      get { return _fourthSortParameter; }
+      set
+      {
+        _fourthSortParameter = value;
+        OnPropertyChanged();
+        OnPropertyChanged(nameof(FirstParameterList));
+        OnPropertyChanged(nameof(SecondParameterList));
+        OnPropertyChanged(nameof(ThirdParameterList));
+      }
+    }
+
     public event PropertyChangedEventHandler PropertyChanged;
 
     public void OnPropertyChanged([CallerMemberName]string propertyName = null)
@@ -163,10 +308,26 @@ namespace CapturefineryViewExtension
       _createAnimations = true;
       _loadImages = false;
       _escapePressed = false;
+      _executeEnabled = true;
+      _progress = 0.0;
+      _executeText = enableText;
+      _parameterList = new List<string>();
+      _dispatcherUIThread = System.Windows.Application.Current.Dispatcher;
     }
 
     public void Dispose()
     {
+    }
+
+    internal void InitProperties(int max)
+    {
+      MaxItems = max;
+      Start = 0;
+      Items = max;
+      FirstSortParameter = null;
+      SecondSortParameter = null;
+      ThirdSortParameter = null;
+      FourthSortParameter = null;
     }
 
     public ObservableCollection<StudyInfo> RefineryTasks
@@ -202,26 +363,18 @@ namespace CapturefineryViewExtension
       return new ObservableCollection<StudyInfo>(nodeList);
     }
 
-    private void OnKeyDown(object sender, KeyEventArgs e)
-    {
-      if (e.KeyCode == Keys.Escape)
-      {
-        _escapePressed = true;
-      }
-    }
-
     public async Task RunTasks(StudyInfo study, HallOfFame hof = null)
     {
       if (
         Start >= 0 && Start < _maxItems &&
-        Items > 0 && Items <= _maxItems &&
+        Items >= 0 && Items <= _maxItems &&
         Start + Items <= _maxItems
       )
       {
         bool waiting = false;
         int counter = Start;
-        var images = new List<Bitmap>();
-        var errorImages = new List<Bitmap>();
+        var images = new Bitmap[_maxItems];
+        var errorImages = new Bitmap[_maxItems];
         var runsWithErrors = new List<int>();
 
         var folder = study.Folder + "\\screenshots";
@@ -229,11 +382,6 @@ namespace CapturefineryViewExtension
         {
           System.IO.Directory.CreateDirectory(folder);
         }
-
-        // Attach a handler to check for the use of Escape
-
-        InterceptKeys.OnKeyDown += new KeyEventHandler(OnKeyDown);
-        InterceptKeys.Start();
 
         // Pre-load any existing images that come before the chosen range, if this option was selected
 
@@ -247,13 +395,13 @@ namespace CapturefineryViewExtension
         ExecutionStateHandler postExecution =
           async (e) =>
           {
+            DoEvents();
+            await Task.Delay(3000);
+
+            waiting = false;
+
             if (!_escapePressed)
             {
-              DoEvents();
-              await Task.Delay(3000);
-
-              waiting = false;
-
               var isError = false;
               if (_captureErrors)
               {
@@ -273,14 +421,17 @@ namespace CapturefineryViewExtension
               var img = SaveScreenshot(GetImageFilename(folder, counter, isError));
               if (isError)
               {
-                errorImages.Add(img);
+                errorImages[counter] = img;
               }
               else
               {
-                images.Add(img);
+                images[counter] = img;
               }
 
               counter++;
+
+              var captured = counter - Start;
+              Progress = 100 * captured / Items;
             }
           };
 
@@ -327,18 +478,38 @@ namespace CapturefineryViewExtension
         {
           if (_createAnimations)
           {
-            if (images.Count > 0)
+            var sortParams = new List<string>();
+            if (FirstSortParameter != null)
             {
-              SaveAnimation(images, folder + "\\animation.gif");
-              SaveAnimation(images, folder + "\\animation-small.gif", 1000);
-              SaveAnimation(images, folder + "\\animation-tiny.gif", 500);
+              sortParams.Add(FirstSortParameter);
+              if (SecondSortParameter != null)
+              {
+                sortParams.Add(SecondSortParameter);
+                if (ThirdSortParameter != null)
+                {
+                  sortParams.Add(ThirdSortParameter);
+                  if (FourthSortParameter != null)
+                  {
+                    sortParams.Add(FourthSortParameter);
+                  }
+                }
+              }
             }
 
-            if (errorImages.Count > 0)
+            var order = GetSolutionOrder(hof, sortParams.ToArray());
+
+            if (!images.All<Bitmap>((b) => b == null))
             {
-              SaveAnimation(errorImages, folder + "\\animation-errors.gif");
-              SaveAnimation(errorImages, folder + "\\animation-errors-small.gif", 1000);
-              SaveAnimation(errorImages, folder + "\\animation-errors-tiny.gif", 500);
+              SaveAnimation(images, order, folder + "\\animation.gif");
+              SaveAnimation(images, order, folder + "\\animation-small.gif", 1000);
+              SaveAnimation(images, order, folder + "\\animation-tiny.gif", 500);
+            }
+
+            if (!errorImages.All<Bitmap>((b) => b == null))
+            {
+              SaveAnimation(errorImages, order, folder + "\\animation-errors.gif");
+              SaveAnimation(errorImages, order, folder + "\\animation-errors-small.gif", 1000);
+              SaveAnimation(errorImages, order, folder + "\\animation-errors-tiny.gif", 500);
             }
           }
 
@@ -354,17 +525,28 @@ namespace CapturefineryViewExtension
 
         foreach (var image in images)
         {
-          image.Dispose();
+          if (image != null)
+          {
+            image.Dispose();
+          }
         }
         foreach (var image in errorImages)
         {
-          image.Dispose();
+          if (image != null)
+          {
+            image.Dispose();
+          }
         }
 
-        InterceptKeys.Stop();
-        InterceptKeys.OnKeyDown -= new KeyEventHandler(OnKeyDown);
+        DisableExecute(false);
         ExecutionEvents.GraphPostExecution -= postExecution;
       }
+    }
+
+    public void DisableExecute(bool disable)
+    {
+      ExecuteEnabled = !disable;
+      ExecuteText = disable ? disableText : enableText;
     }
 
     private string GetImageFilename(string folder, int counter, bool isError)
@@ -372,7 +554,7 @@ namespace CapturefineryViewExtension
       return folder + "\\" + counter.ToString() + (isError ? "-error" : "") + ".jpg";
     }
 
-    private void LoadExistingImages(List<Bitmap> images, List<Bitmap> errors, string folder, int start, int end)
+    private void LoadExistingImages(Bitmap[] images, Bitmap[] errors, string folder, int start, int end)
     {
       for (var i = start; i < end; i++)
       {
@@ -382,7 +564,7 @@ namespace CapturefineryViewExtension
           var image = new Bitmap(name);
           if (image != null)
           {
-            images.Add(image);
+            images[i] = image;
           }
         }
         else
@@ -396,7 +578,7 @@ namespace CapturefineryViewExtension
             var errImage = new Bitmap(errName);
             if (errImage != null)
             {
-              (errors == null ? images : errors).Add(errImage);
+              (errors == null ? images : errors)[i] = errImage;
             }
           }
         }
@@ -406,7 +588,63 @@ namespace CapturefineryViewExtension
     public HallOfFame GetHallOfFame(StudyInfo study)
     {
       var fof = JsonConvert.DeserializeObject<FileOfFame>(File.ReadAllText(study.Folder + "\\RefineryResults.json"));
+      if (fof != null && fof.hallOfFame != null)
+      {
+        var hof = fof.hallOfFame;
+        _parameterList.Clear();
+        _parameterList.Add(EmptyComboValue); // This means we clear the setting
+        _parameterList.AddRange(hof.goals);
+        ParameterList.AddRange(hof.variables);
+      }
       return fof.hallOfFame;
+    }
+
+    public int[] GetSolutionOrder(HallOfFame hof, string[] parameters)
+    {
+      // Populate default array with sequential order
+
+      var maxItems = hof.solutions.Length;
+      var res = new int[maxItems];
+      for (int i = 0; i < maxItems; i++)
+      {
+        res[i] = i;
+      }
+
+      if (parameters.Length > 0)
+      {
+        var idx = GetParameterIndex(hof, parameters[0]);
+        var selected = hof.solutions.Select((item, index) => new { item, index });
+        var ordered = selected.OrderBy(a => Extract(a.item[idx]));
+
+        for (int i = 1; i < parameters.Length; i++)
+        {
+          var idx2 = GetParameterIndex(hof, parameters[i]);
+          ordered = ordered.ThenBy(a => Extract(a.item[idx2]));
+        }
+        return ordered.Select(a => a.index).ToArray<int>();
+      }
+      return res;
+    }
+
+    private double Extract(string str)
+    {
+      return Math.Round(double.Parse(str), 6);
+    }
+
+    private int GetParameterIndex(HallOfFame hof, string param)
+    {
+      int idx = -1;
+      var goalIdx = Array.IndexOf(hof.goals, param);
+      if (goalIdx >= 0)
+      {
+        idx = goalIdx;
+      }
+      var varIdx = Array.IndexOf(hof.variables, param);
+      if (varIdx >= 0)
+      {
+        idx = hof.goals.Length + varIdx;
+      }
+      return idx;
     }
 
     private void SaveFilteredHallOfFame(StudyInfo study, string folder, List<int> subset)
@@ -498,7 +736,7 @@ namespace CapturefineryViewExtension
       {
         // We need to perform the capture on the main thread
 
-        System.Windows.Application.Current.Dispatcher.Invoke(
+        _dispatcherUIThread.Invoke(
           () =>
           {
             _dynamoViewModel.OnRequestSave3DImage(_dynamoViewModel, new ImageSaveEventArgs(file));
@@ -509,37 +747,57 @@ namespace CapturefineryViewExtension
       return bitmap;
     }
 
-    private void SaveAnimation(IEnumerable<Bitmap> images, string path, int? width = null)
+    private void SaveAnimation(Bitmap[] images, IEnumerable<int> order, string path, int? width = null)
     {
       // If a width has been provided, scale the source images down to that width
 
-      IEnumerable<Bitmap> smallImages = null;
+      var smallImages = new Bitmap[images.Length];
 
       if (width != null && width.HasValue)
       {
-        var first = images.First<System.Drawing.Bitmap>();
-        var w = width != null && width.HasValue ? width.Value : first.Width;
-        var h = first.Height * w / first.Width;
+        Bitmap first = null;
+        for (int i = 0; i < images.Length; i++)
+        {
+          if (images[i] != null)
+          {
+            first = images[i];
+            break;
+          }
+        }
+        if (first != null)
+        {
+          var w = width != null && width.HasValue ? width.Value : first.Width;
+          var h = first.Height * w / first.Width;
 
-        smallImages = from img in images
-                      select new Bitmap(img, w, h);
-        images = smallImages;
+          for (int i = 0; i < images.Length; i++)
+          {
+            smallImages[i] = images[i] != null ? new Bitmap(images[i], w, h) : null;
+          }
+          images = smallImages;
+        }
       }
 
       // From: https://stackoverflow.com/questions/1196322/how-to-create-an-animated-gif-in-net
 
       var enc = new GifBitmapEncoder();
 
-      foreach (var bmpImage in images)
+      foreach (var idx in order)
       {
-        var bmp = bmpImage.GetHbitmap();
-        var src = Imaging.CreateBitmapSourceFromHBitmap(
-            bmp,
-            IntPtr.Zero,
-            Int32Rect.Empty,
-            BitmapSizeOptions.FromEmptyOptions());
-        enc.Frames.Add(BitmapFrame.Create(src));
-        DeleteObject(bmp); // recommended, handle memory leak
+        var bmpImage = images[idx];
+        if (bmpImage != null)
+        {
+          var bmp = bmpImage.GetHbitmap();
+          if (bmp != null)
+          {
+            var src = Imaging.CreateBitmapSourceFromHBitmap(
+                bmp,
+                IntPtr.Zero,
+                Int32Rect.Empty,
+                BitmapSizeOptions.FromEmptyOptions());
+            enc.Frames.Add(BitmapFrame.Create(src));
+            DeleteObject(bmp); // recommended, handle memory leak
+          }
+        }
       }
 
       // Hack to make the image loop
@@ -562,14 +820,17 @@ namespace CapturefineryViewExtension
       {
         foreach (var image in smallImages)
         {
-          image.Dispose();
+          if (image != null)
+          {
+            image.Dispose();
+          }
         }
       }
     }
 
     private void DoEvents()
     {
-      System.Windows.Application.Current.Dispatcher.Invoke(
+      _dispatcherUIThread.Invoke(
         DispatcherPriority.Background, new Action(delegate { })
       );
     }

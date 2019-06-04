@@ -6,15 +6,15 @@
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
   xmlns:local="clr-namespace:CapturefineryViewExtension"
   mc:Ignorable="d"
-  Width="336"
+  Width="560"
   MinWidth="300"
-  Height="437.653"
+  Height="754.653"
   MinHeight="220"
   FontSize="13"
   FontFamily="Artifakt Element"
-  Title="Study List"
+  Title="Capturefinery"
   ShowInTaskbar="False" WindowStyle="ToolWindow">
-    <Grid Name="MainGrid">
+    <Grid x:Name="MainGrid">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" MinWidth="300"/>
         </Grid.ColumnDefinitions>
@@ -23,9 +23,13 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <DataGrid
+            x:Name="StudyList"
+            Visibility="Visible"
             ItemsSource="{Binding RefineryTasks}"
             HeadersVisibility="Column"
             AutoGenerateColumns="False"
+            Grid.Row="0"
+            Grid.RowSpan="2"
             IsReadOnly="True"
             Background="#353535"
             BorderBrush="#353535"
@@ -33,7 +37,8 @@
             GridLinesVisibility="None"
             CanUserReorderColumns="False"
             CanUserResizeColumns="False"
-            SelectionChanged="Grid_SelectionChanged"
+            SelectionChanged="OnDataGridSelectionChanged"
+            MouseLeftButtonDown="OnDataGridMouseLeftButtonDown"
             SelectionMode="Single">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="#" Binding="{Binding ID}" CanUserReorder="False"/>
@@ -66,27 +71,57 @@
                 </Style>
             </DataGrid.Resources>
         </DataGrid>
+        <Rectangle Grid.Row="1" Fill="White" />
         <Grid x:Name="TaskOptions" Grid.Row="1" Visibility="Visible" Height="Auto">
-            <Label x:Name="TaskLabel" Content="{Binding MaxItems}" ContentStringFormat="Number of items in selected study: {0}" HorizontalAlignment="Left" Margin="21,19,0,200" VerticalAlignment="Bottom" />
-            <Label x:Name="StartLabel" Content="Index of first item to capture" HorizontalAlignment="Left" Margin="21,51,0,165" VerticalAlignment="Bottom" />
-            <Label x:Name="ItemsLabel" Content="Number of items to capture" HorizontalAlignment="Left" Margin="21,83,0,135" VerticalAlignment="Bottom" />
-            <TextBox x:Name="StartText" Margin="0,55,20,165" TextWrapping="Wrap" Text="{Binding Start,ValidatesOnExceptions=True}" HorizontalAlignment="Right" Height="24" Width="53" MinWidth="20" MinHeight="24" VerticalAlignment="Bottom" TextAlignment="Right" />
-            <TextBox x:Name="ItemsText" Margin="0,87,20,135" TextWrapping="Wrap" Text="{Binding Items,ValidatesOnExceptions=True}" HorizontalAlignment="Right" Width="53" Height="24" MinWidth="20" MinHeight="24" VerticalAlignment="Bottom" TextAlignment="Right" />
-            <Button x:Name="ExecuteButton" Content="Capture" Margin="0,0,20,10" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="75" Height="21" MinWidth="75" MinHeight="21" IsDefault="True" Click="ExecuteButton_Click" />
-            <CheckBox x:Name="ErrorCheck" Content="Capture and separate errors" HorizontalAlignment="Left" Margin="27,115,20,105" VerticalAlignment="Bottom" IsChecked="{Binding CaptureErrors}"/>
-            <CheckBox x:Name="AnimateCheck" Content="Create animations" HorizontalAlignment="Left" Margin="27,115,20,75" VerticalAlignment="Bottom" IsChecked="{Binding CreateAnimations}"/>
-            <CheckBox x:Name="LoadCheck" Content="Load existing images" HorizontalAlignment="Left" Margin="27,115,20,45" VerticalAlignment="Bottom" IsChecked="{Binding LoadImages}">
-                <CheckBox.Style>
-                    <Style TargetType="CheckBox">
-                        <Setter Property="IsEnabled" Value="False"></Setter>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsChecked,ElementName=AnimateCheck}" Value="True">
-                                <Setter Property="IsEnabled" Value="True"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </CheckBox.Style>
-            </CheckBox>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="30"/>
+                <RowDefinition Height="30"/>
+                <RowDefinition Height="30"/>
+                <RowDefinition Height="30"/>
+                <RowDefinition Height="30"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="0"/>
+                <RowDefinition Height="0"/>
+                <RowDefinition Height="0"/>
+                <RowDefinition Height="30"/>
+                <RowDefinition Height="30"/>
+            </Grid.RowDefinitions>
+            <Label x:Name="TaskLabel" Content="{Binding MaxItems}" ContentStringFormat="Number of items in selected study: {0}" HorizontalAlignment="Left"  VerticalAlignment="Center" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="0" />
+            <Label x:Name="StartLabel" Content="Index of first item to capture" HorizontalAlignment="Left"  VerticalAlignment="Center" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" />
+            <TextBox x:Name="StartText" TextWrapping="Wrap" Text="{Binding Start,ValidatesOnExceptions=True}" HorizontalAlignment="Right" VerticalAlignment="Center" Height="24" Width="53" MinWidth="20" MinHeight="24" Grid.Column="1" Grid.Row="1" TextAlignment="Right" />
+            <Label x:Name="ItemsLabel" Content="Number of items to capture" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="2" />
+            <TextBox x:Name="ItemsText" TextWrapping="Wrap" Text="{Binding Items,ValidatesOnExceptions=True}" HorizontalAlignment="Right" VerticalAlignment="Center" Width="53" Height="24" MinWidth="20" MinHeight="24" Grid.Column="1" Grid.Row="2" TextAlignment="Right" />
+            <CheckBox x:Name="ErrorCheck" Content="Capture and separate errors" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="3" IsChecked="{Binding CaptureErrors}"/>
+            <CheckBox x:Name="AnimateCheck" Content="Create animations" Checked="OnAnimateChecked" Unchecked="OnAnimateChecked" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="4" IsChecked="{Binding CreateAnimations}"/>
+            <CheckBox x:Name="LoadCheck" Content="Load existing images" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,5,0,5" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="5" IsChecked="{Binding LoadImages}"/>
+            <Label x:Name="FirstLevelLabel" Content="1st level sorting" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="6" />
+            <ComboBox x:Name="SortLevelComboBox1" ItemsSource="{Binding FirstParameterList}" SelectedItem="{Binding FirstSortParameter, Mode=TwoWay}" Text="Select parameter" SelectionChanged="OnSortComboSelectionChanged" HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Column="1" Grid.Row="6"/>
+            <Label x:Name="SecondLevelLabel" Content="2nd level sorting" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="7"/>
+            <ComboBox x:Name="SortLevelComboBox2" ItemsSource="{Binding SecondParameterList}" SelectedItem="{Binding SecondSortParameter, Mode=TwoWay}" Text="Select parameter" SelectionChanged="OnSortComboSelectionChanged" HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Column="1" Grid.Row="7"/>
+            <Label x:Name="ThirdLevelLabel" Content="3rd level sorting" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="8"/>
+            <ComboBox x:Name="SortLevelComboBox3" ItemsSource="{Binding ThirdParameterList}" SelectedItem="{Binding ThirdSortParameter, Mode=TwoWay}" Text="Select parameter" SelectionChanged="OnSortComboSelectionChanged" HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Column="1" Grid.Row="8"/>
+            <Label x:Name="FourthLevelLabel" Content="4th level sorting" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="9"/>
+            <ComboBox x:Name="SortLevelComboBox4" ItemsSource="{Binding FourthParameterList}" SelectedItem="{Binding FourthSortParameter, Mode=TwoWay}" Text="Select parameter" SelectionChanged="OnSortComboSelectionChanged" HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Column="1" Grid.Row="9"/>
+            <Button x:Name="ExecuteButton" Content="Capture" HorizontalAlignment="Center" VerticalAlignment="Center" Width="150" Height="25" MinWidth="75" MinHeight="21" IsDefault="True" Grid.Column="0" Grid.ColumnSpan="2" Click="OnExecuteButtonClick" IsEnabled="{Binding ExecuteEnabled}" Grid.Row="11">
+                <Button.ToolTip>
+                    <ToolTip Content="{Binding ExecuteText}" />
+                </Button.ToolTip>
+            </Button>
+        </Grid>
+        <Grid x:Name="ProgressGrid" Background="White" Visibility="Hidden" Grid.Row="0" Grid.RowSpan="2" Margin="10,10,10,10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="50"/>
+                <RowDefinition Height="50"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <ProgressBar x:Name="ProgressBar" Height="40" Grid.Row="1" Value="{Binding Progress}"/>
+            <Button x:Name="CancelButton" Content="Cancel Capture" HorizontalAlignment="Center" VerticalAlignment="Center" Width="150" Height="30" MinWidth="100" MinHeight="21" IsDefault="True" Grid.Column="0" Click="OnCancelButtonClick" Grid.Row="2" IsCancel="True" />
         </Grid>
     </Grid>
 </Window>
