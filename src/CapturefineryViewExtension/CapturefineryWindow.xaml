@@ -89,6 +89,12 @@
                 <RowDefinition Height="0"/>
                 <RowDefinition Height="0"/>
                 <RowDefinition Height="0"/>
+                <RowDefinition Height="0"/>
+                <RowDefinition Height="0"/>
+                <RowDefinition Height="0"/>
+                <RowDefinition Height="0"/>
+                <RowDefinition Height="0"/>
+                <RowDefinition Height="0"/>
                 <RowDefinition Height="30"/>
                 <RowDefinition Height="30"/>
             </Grid.RowDefinitions>
@@ -103,14 +109,26 @@
             <TextBox x:Name="RootText" TextWrapping="Wrap" Text="{Binding RootName}" HorizontalAlignment="Stretch" VerticalAlignment="Center" Width="Auto" Height="24" MinWidth="20" MinHeight="24" Grid.Column="1" Grid.Row="5" TextAlignment="Left" />
             <CheckBox x:Name="LoadCheck" Content="Load existing images" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,5,0,5" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="6" IsChecked="{Binding LoadImages}"/>
             <Label x:Name="FirstLevelLabel" Content="1st level sorting" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="7" />
-            <ComboBox x:Name="SortLevelComboBox1" ItemsSource="{Binding FirstParameterList}" SelectedItem="{Binding FirstSortParameter, Mode=TwoWay}" Text="Select parameter" SelectionChanged="OnSortComboSelectionChanged" HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Column="1" Grid.Row="7"/>
+            <ComboBox x:Name="SortLevelComboBox1" ItemsSource="{Binding ParameterLists[0]}" SelectedItem="{Binding SortParameters[0], Mode=TwoWay}" Text="Select parameter" SelectionChanged="OnSortComboSelectionChanged" HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Column="1" Grid.Row="7"/>
             <Label x:Name="SecondLevelLabel" Content="2nd level sorting" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="8"/>
-            <ComboBox x:Name="SortLevelComboBox2" ItemsSource="{Binding SecondParameterList}" SelectedItem="{Binding SecondSortParameter, Mode=TwoWay}" Text="Select parameter" SelectionChanged="OnSortComboSelectionChanged" HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Column="1" Grid.Row="8"/>
+            <ComboBox x:Name="SortLevelComboBox2" ItemsSource="{Binding ParameterLists[1]}" SelectedItem="{Binding SortParameters[1], Mode=TwoWay}" Text="Select parameter" SelectionChanged="OnSortComboSelectionChanged" HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Column="1" Grid.Row="8"/>
             <Label x:Name="ThirdLevelLabel" Content="3rd level sorting" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="9"/>
-            <ComboBox x:Name="SortLevelComboBox3" ItemsSource="{Binding ThirdParameterList}" SelectedItem="{Binding ThirdSortParameter, Mode=TwoWay}" Text="Select parameter" SelectionChanged="OnSortComboSelectionChanged" HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Column="1" Grid.Row="9"/>
+            <ComboBox x:Name="SortLevelComboBox3" ItemsSource="{Binding ParameterLists[2]}" SelectedItem="{Binding SortParameters[2], Mode=TwoWay}" Text="Select parameter" SelectionChanged="OnSortComboSelectionChanged" HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Column="1" Grid.Row="9"/>
             <Label x:Name="FourthLevelLabel" Content="4th level sorting" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="10"/>
-            <ComboBox x:Name="SortLevelComboBox4" ItemsSource="{Binding FourthParameterList}" SelectedItem="{Binding FourthSortParameter, Mode=TwoWay}" Text="Select parameter" SelectionChanged="OnSortComboSelectionChanged" HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Column="1" Grid.Row="10"/>
-            <Button x:Name="ExecuteButton" Content="Capture" HorizontalAlignment="Center" VerticalAlignment="Center" Width="150" Height="25" MinWidth="75" MinHeight="21" IsDefault="True" Grid.Column="0" Grid.ColumnSpan="2" Click="OnExecuteButtonClick" IsEnabled="{Binding ExecuteEnabled}" Grid.Row="12">
+            <ComboBox x:Name="SortLevelComboBox4" ItemsSource="{Binding ParameterLists[3]}" SelectedItem="{Binding SortParameters[3], Mode=TwoWay}" Text="Select parameter" SelectionChanged="OnSortComboSelectionChanged" HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Column="1" Grid.Row="10"/>
+            <Label x:Name="FifthLevelLabel" Content="5th level sorting" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="11"/>
+            <ComboBox x:Name="SortLevelComboBox5" ItemsSource="{Binding ParameterLists[4]}" SelectedItem="{Binding SortParameters[4], Mode=TwoWay}" Text="Select parameter" SelectionChanged="OnSortComboSelectionChanged" HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Column="1" Grid.Row="11"/>
+            <Label x:Name="SixthLevelLabel" Content="6th level sorting" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="12"/>
+            <ComboBox x:Name="SortLevelComboBox6" ItemsSource="{Binding ParameterLists[5]}" SelectedItem="{Binding SortParameters[5], Mode=TwoWay}" Text="Select parameter" SelectionChanged="OnSortComboSelectionChanged" HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Column="1" Grid.Row="12"/>
+            <Label x:Name="SeventhLevelLabel" Content="7th level sorting" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="13"/>
+            <ComboBox x:Name="SortLevelComboBox7" ItemsSource="{Binding ParameterLists[6]}" SelectedItem="{Binding SortParameters[6], Mode=TwoWay}" Text="Select parameter" SelectionChanged="OnSortComboSelectionChanged" HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Column="1" Grid.Row="13"/>
+            <Label x:Name="EigthLevelLabel" Content="8th level sorting" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="14"/>
+            <ComboBox x:Name="SortLevelComboBox8" ItemsSource="{Binding ParameterLists[7]}" SelectedItem="{Binding SortParameters[7], Mode=TwoWay}" Text="Select parameter" SelectionChanged="OnSortComboSelectionChanged" HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Column="1" Grid.Row="14"/>
+            <Label x:Name="NinthLevelLabel" Content="9th level sorting" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="15"/>
+            <ComboBox x:Name="SortLevelComboBox9" ItemsSource="{Binding ParameterLists[8]}" SelectedItem="{Binding SortParameters[8], Mode=TwoWay}" Text="Select parameter" SelectionChanged="OnSortComboSelectionChanged" HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Column="1" Grid.Row="15"/>
+            <Label x:Name="TenthLevelLabel" Content="10th level sorting" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="16"/>
+            <ComboBox x:Name="SortLevelComboBox10" ItemsSource="{Binding ParameterLists[9]}" SelectedItem="{Binding SortParameters[9], Mode=TwoWay}" Text="Select parameter" SelectionChanged="OnSortComboSelectionChanged" HorizontalAlignment="Stretch" VerticalAlignment="Center" Grid.Column="1" Grid.Row="16"/>
+            <Button x:Name="ExecuteButton" Content="Capture" HorizontalAlignment="Center" VerticalAlignment="Center" Width="150" Height="25" MinWidth="75" MinHeight="21" IsDefault="True" Grid.Column="0" Grid.ColumnSpan="2" Click="OnExecuteButtonClick" IsEnabled="{Binding ExecuteEnabled}" Grid.Row="18">
                 <Button.ToolTip>
                     <ToolTip Content="{Binding ExecuteText}" />
                 </Button.ToolTip>

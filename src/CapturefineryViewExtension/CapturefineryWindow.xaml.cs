@@ -13,7 +13,6 @@ namespace CapturefineryViewExtension
     private StudyInfo _study;
     private HallOfFame _hof;
 
-    const int numberOfSortParameters = 4;
     const int startSortRow = 8;
 
     public CapturefineryWindow()
@@ -117,10 +116,14 @@ namespace CapturefineryViewExtension
 
       if (!check || forceHide)
       {
-        var hide = new GridLength(0);
-        for (int i = 0; i < numberOfSortParameters - 1; i++)
+        var viewModel = MainGrid.DataContext as CapturefineryWindowViewModel;
+        if (viewModel != null)
         {
-          TaskOptions.RowDefinitions[startSortRow + i].Height = hide;
+          var hide = new GridLength(0);
+          for (int i = 0; i < viewModel.SortParameterNumber - 1; i++)
+          {
+            TaskOptions.RowDefinitions[startSortRow + i].Height = hide;
+          }
         }
       }
     }
@@ -145,11 +148,11 @@ namespace CapturefineryViewExtension
         var name = combo.Name;
         if (name.StartsWith(prefix))
         {
-          var number = Int32.Parse(name.Substring(prefix.Length)) - 1;
-          if (number >= 0 && number < numberOfSortParameters)
+          var viewModel = MainGrid.DataContext as CapturefineryWindowViewModel;
+          if (viewModel != null)
           {
-            var viewModel = MainGrid.DataContext as CapturefineryWindowViewModel;
-            if (viewModel != null)
+            var number = Int32.Parse(name.Substring(prefix.Length)) - 1;
+            if (number >= 0 && number < viewModel.SortParameterNumber)
             {
               // Check whether the item selected is an empty value
 
@@ -162,17 +165,18 @@ namespace CapturefineryViewExtension
                 // Hide the grid rows
 
                 var hide = new GridLength(0);
-                for (int i = startSortRow + number; i < startSortRow + numberOfSortParameters - 1; i++)
+                for (int i = startSortRow + number; i < startSortRow + viewModel.SortParameterNumber - 1; i++)
                 {
                   TaskOptions.RowDefinitions[i].Height = hide;
                 }
               }
               else
               {
-                if (number < numberOfSortParameters - 1)
+                if (number < viewModel.SortParameterNumber - 1)
                 {
                   var show = new GridLength(0, GridUnitType.Auto);
                   TaskOptions.RowDefinitions[startSortRow + number].Height = show;
+                  viewModel.UpdateSortParameterLists();
                 }
               }
             }

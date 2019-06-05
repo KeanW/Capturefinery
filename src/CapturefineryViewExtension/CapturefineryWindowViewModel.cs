@@ -75,11 +75,10 @@ namespace CapturefineryViewExtension
     private bool _executeEnabled;
     private string _executeText;
     private Dispatcher _dispatcherUIThread;
-    private string _firstSortParameter;
-    private string _secondSortParameter;
-    private string _thirdSortParameter;
-    private string _fourthSortParameter;
+    private string[] _sortParameters;
     private List<string> _parameterList;
+    private IEnumerable<string>[] _parameterLists;
+    public readonly int SortParameterNumber = 10;
 
     const string enableText = "Click here to launch a capture run. It may take some time, but can be canceled.";
     const string disableText = "Capture canceled; another can be started when current run completes.";
@@ -211,22 +210,27 @@ namespace CapturefineryViewExtension
 
     internal void ClearSortParameters(int start)
     {
-      if (start <= 0)
+      for (int i = start; i < SortParameterNumber; i++)
       {
-        FirstSortParameter = null;
+        _sortParameters[i] = null;
       }
-      if (start <= 1)
+      OnPropertyChanged(nameof(SortParameters));
+    }
+
+    public string[] SortParameters
+    {
+      get { return _sortParameters; }
+      set
       {
-        SecondSortParameter = null;
+        _sortParameters = value;
+        OnPropertyChanged();
+        OnPropertyChanged(nameof(ParameterLists));
       }
-      if (start <= 2)
-      {
-        ThirdSortParameter = null;
-      }
-      if (start <= 3)
-      {
-        FourthSortParameter = null;
-      }
+    }
+
+    internal void UpdateSortParameterLists()
+    {
+      OnPropertyChanged(nameof(ParameterLists));
     }
 
     public List<string> ParameterList
@@ -236,67 +240,28 @@ namespace CapturefineryViewExtension
       {
         _parameterList = value;
         OnPropertyChanged();
-        OnPropertyChanged(nameof(FirstParameterList));
-        OnPropertyChanged(nameof(SecondParameterList));
-        OnPropertyChanged(nameof(ThirdParameterList));
-        OnPropertyChanged(nameof(FourthParameterList));
       }
     }
 
-    public IEnumerable<string> FirstParameterList => ParameterList.Where(o => o != SecondSortParameter && o != ThirdSortParameter && o != FourthSortParameter);
-    public IEnumerable<string> SecondParameterList => ParameterList.Where(o => o != FirstSortParameter && o != ThirdSortParameter && o != FourthSortParameter);
-    public IEnumerable<string> ThirdParameterList => ParameterList.Where(o => o != FirstSortParameter && o != SecondSortParameter && o != FourthSortParameter);
-    public IEnumerable<string> FourthParameterList => ParameterList.Where(o => o != FirstSortParameter && o != SecondSortParameter && o != ThirdSortParameter);
-
-    public string FirstSortParameter
+    public IEnumerable<string>[] ParameterLists
     {
-      get { return _firstSortParameter; }
-      set
+      get
       {
-        _firstSortParameter = value;
-        OnPropertyChanged();
-        OnPropertyChanged(nameof(SecondParameterList));
-        OnPropertyChanged(nameof(ThirdParameterList));
-        OnPropertyChanged(nameof(FourthParameterList));
+        for (int i = 0; i < SortParameterNumber; i++)
+        {
+          var parameter = _sortParameters[i];
+          _parameterLists[i] = ParameterList.Where(o => o == parameter || !_sortParameters.Contains(o));
+          if (parameter == null)
+          {
+            break;
+          }
+        }
+        return _parameterLists;
       }
-    }
-
-    public string SecondSortParameter
-    {
-      get { return _secondSortParameter; }
       set
       {
-        _secondSortParameter = value;
+        _parameterLists = value;
         OnPropertyChanged();
-        OnPropertyChanged(nameof(FirstParameterList));
-        OnPropertyChanged(nameof(ThirdParameterList));
-        OnPropertyChanged(nameof(FourthParameterList));
-      }
-    }
-
-    public string ThirdSortParameter
-    {
-      get { return _thirdSortParameter; }
-      set
-      {
-        _thirdSortParameter = value;
-        OnPropertyChanged();
-        OnPropertyChanged(nameof(FirstParameterList));
-        OnPropertyChanged(nameof(SecondParameterList));
-        OnPropertyChanged(nameof(FourthParameterList));
-      }
-    }
-
-    public string FourthSortParameter
-    {
-      get { return _fourthSortParameter; }
-      set
-      {
-        _fourthSortParameter = value;
-        OnPropertyChanged();
-        OnPropertyChanged(nameof(FirstParameterList));
-        OnPropertyChanged(nameof(SecondParameterList));
-        OnPropertyChanged(nameof(ThirdParameterList));
       }
     }
 
@@ -325,7 +290,9 @@ namespace CapturefineryViewExtension
       _executeEnabled = true;
       _progress = 0.0;
       _executeText = enableText;
+      _sortParameters = new string[SortParameterNumber];
       _parameterList = new List<string>();
+      _parameterLists = new IEnumerable<string>[SortParameterNumber];
       _dispatcherUIThread = System.Windows.Application.Current.Dispatcher;
     }
 
@@ -338,10 +305,7 @@ namespace CapturefineryViewExtension
       MaxItems = max;
       Start = 0;
       Items = max;
-      FirstSortParameter = null;
-      SecondSortParameter = null;
-      ThirdSortParameter = null;
-      FourthSortParameter = null;
+      ClearSortParameters(0);
     }
 
     public ObservableCollection<StudyInfo> RefineryTasks
@@ -492,25 +456,7 @@ namespace CapturefineryViewExtension
         {
           if (_createAnimations)
           {
-            var sortParams = new List<string>();
-            if (FirstSortParameter != null)
-            {
-              sortParams.Add(FirstSortParameter);
-              if (SecondSortParameter != null)
-              {
-                sortParams.Add(SecondSortParameter);
-                if (ThirdSortParameter != null)
-                {
-                  sortParams.Add(ThirdSortParameter);
-                  if (FourthSortParameter != null)
-                  {
-                    sortParams.Add(FourthSortParameter);
-                  }
-                }
-              }
-            }
-
-            var order = GetSolutionOrder(hof, sortParams.ToArray());
+            var order = GetSolutionOrder(hof, _sortParameters);
 
             var rootName = StripInvalidFileAndPathCharacters(_rootName);
 
@@ -631,6 +577,7 @@ namespace CapturefineryViewExtension
         _parameterList.Add(EmptyComboValue); // This means we clear the setting
         _parameterList.AddRange(hof.goals);
         ParameterList.AddRange(hof.variables);
+        OnPropertyChanged(nameof(ParameterLists));
       }
       return fof.hallOfFame;
     }
@@ -654,7 +601,12 @@ namespace CapturefineryViewExtension
 
         for (int i = 1; i < parameters.Length; i++)
         {
-          var idx2 = GetParameterIndex(hof, parameters[i]);
+          var parameter = parameters[i];
+          if (parameter == null)
+          {
+            break;
+          }
+          var idx2 = GetParameterIndex(hof, parameter);
           ordered = ordered.ThenBy(a => Extract(a.item[idx2]));
         }
         return ordered.Select(a => a.index).ToArray<int>();
