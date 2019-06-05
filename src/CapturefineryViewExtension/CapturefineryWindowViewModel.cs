@@ -27,6 +27,8 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using Clipboard = System.Windows.Clipboard;
+using MessageBox = System.Windows.MessageBox;
 
 namespace CapturefineryViewExtension
 {
@@ -67,6 +69,7 @@ namespace CapturefineryViewExtension
     private double _progress;
     private bool _captureErrors;
     private bool _createAnimations;
+    private string _rootName;
     private bool _loadImages;
     private bool _escapePressed;
     private bool _executeEnabled;
@@ -142,6 +145,16 @@ namespace CapturefineryViewExtension
 
           LoadImages = false;
         }
+        OnPropertyChanged();
+      }
+    }
+
+    public string RootName
+    {
+      get { return _rootName; }
+      set
+      {
+        _rootName = value;
         OnPropertyChanged();
       }
     }
@@ -306,6 +319,7 @@ namespace CapturefineryViewExtension
       _file = p.CurrentWorkspaceModel.FileName;
       _captureErrors = true;
       _createAnimations = true;
+      _rootName = "animation";
       _loadImages = false;
       _escapePressed = false;
       _executeEnabled = true;
@@ -498,18 +512,20 @@ namespace CapturefineryViewExtension
 
             var order = GetSolutionOrder(hof, sortParams.ToArray());
 
+            var rootName = StripInvalidFileAndPathCharacters(_rootName);
+
             if (!images.All<Bitmap>((b) => b == null))
             {
-              SaveAnimation(images, order, folder + "\\animation.gif");
-              SaveAnimation(images, order, folder + "\\animation-small.gif", 1000);
-              SaveAnimation(images, order, folder + "\\animation-tiny.gif", 500);
+              SaveAnimation(images, order, folder + "\\" + rootName + ".gif");
+              SaveAnimation(images, order, folder + "\\" + rootName + "-small.gif", 1000);
+              SaveAnimation(images, order, folder + "\\" + rootName + "-tiny.gif", 500);
             }
 
             if (!errorImages.All<Bitmap>((b) => b == null))
             {
-              SaveAnimation(errorImages, order, folder + "\\animation-errors.gif");
-              SaveAnimation(errorImages, order, folder + "\\animation-errors-small.gif", 1000);
-              SaveAnimation(errorImages, order, folder + "\\animation-errors-tiny.gif", 500);
+              SaveAnimation(errorImages, order, folder + "\\" + rootName + "-errors.gif");
+              SaveAnimation(errorImages, order, folder + "\\" + rootName + "-errors-small.gif", 1000);
+              SaveAnimation(errorImages, order, folder + "\\" + rootName + "-errors-tiny.gif", 500);
             }
           }
 
@@ -540,7 +556,27 @@ namespace CapturefineryViewExtension
 
         DisableExecute(false);
         ExecutionEvents.GraphPostExecution -= postExecution;
+
+        var result = MessageBox.Show("Capture complete. Copy output path to the clipboard?",
+                                      "Confirmation",
+                                      MessageBoxButton.YesNo,
+                                      MessageBoxImage.Question);
+        if (result == MessageBoxResult.Yes)
+        {
+          Clipboard.SetText(folder);
+        }
       }
+    }
+
+    public string StripInvalidFileAndPathCharacters(string filename)
+    {
+      var valid = filename;
+      var invalid = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
+      foreach (char c in invalid)
+      {
+        valid = valid.Replace(c.ToString(), "");
+      }
+      return valid;
     }
 
     public void DisableExecute(bool disable)

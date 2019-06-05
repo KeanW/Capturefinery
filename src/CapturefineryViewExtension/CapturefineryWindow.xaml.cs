@@ -14,7 +14,7 @@ namespace CapturefineryViewExtension
     private HallOfFame _hof;
 
     const int numberOfSortParameters = 4;
-    const int startSortRow = 7;
+    const int startSortRow = 8;
 
     public CapturefineryWindow()
     {
@@ -107,10 +107,11 @@ namespace CapturefineryViewExtension
     {
       var val = check ? new GridLength(0, GridUnitType.Auto) : new GridLength(0);
 
-      // Show/hide the load image checkbox and first sort combo
+      // Show/hide the load image checkbox, root filename and first sort combo
 
       TaskOptions.RowDefinitions[5].Height = val;
       TaskOptions.RowDefinitions[6].Height = val;
+      TaskOptions.RowDefinitions[7].Height = val;
 
       // Optionally hide the sort combos after the first one
 
