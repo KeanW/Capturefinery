@@ -329,6 +329,7 @@ namespace CapturefineryViewExtension
         var images = new Bitmap[_maxItems];
         var errorImages = new Bitmap[_maxItems];
         var runsWithErrors = new List<int>();
+        Progress = 0;
 
         var folder = study.Folder + "\\screenshots";
         if (!System.IO.Directory.Exists(folder))
@@ -395,28 +396,35 @@ namespace CapturefineryViewExtension
           hof = GetHallOfFame(study);
         }
 
-        var nodeMap = GetDynamoNodesForInputParameters(hof.variables, _readyParams.CurrentWorkspaceModel.Nodes);
-
-        for (int i = Start; i < Start + Items; i++)
+        if (Items == 0)
         {
-          if (_escapePressed)
+          Progress = 100;
+        }
+        else
+        {
+          var nodeMap = GetDynamoNodesForInputParameters(hof.variables, _readyParams.CurrentWorkspaceModel.Nodes);
+
+          for (int i = Start; i < Start + Items; i++)
           {
-            break;
-          }
+            if (_escapePressed)
+            {
+              break;
+            }
 
-          var parameters = hof.solutions[i];
-          for (var j = 0; j < hof.variables.Length; j++)
-          {
-            SetDynamoInputParameter(nodeMap, hof.variables[j], parameters[hof.goals.Length + j]);
-          }
+            var parameters = hof.solutions[i];
+            for (var j = 0; j < hof.variables.Length; j++)
+            {
+              SetDynamoInputParameter(nodeMap, hof.variables[j], parameters[hof.goals.Length + j]);
+            }
 
-          waiting = true;
+            waiting = true;
 
-          StartDynamoRun();
+            StartDynamoRun();
 
-          while (waiting)
-          {
-            await Task.Delay(1000);
+            while (waiting)
+            {
+              await Task.Delay(1000);
+            }
           }
         }
 
@@ -593,6 +601,10 @@ namespace CapturefineryViewExtension
       while (SortLevels.Count > startLevel)
       {
         SortLevels.RemoveAt(startLevel);
+      }
+      if (startLevel > 0)
+      {
+        SortLevels[startLevel - 1].Parameter = null;
       }
       UpdateSortLevels();
     }

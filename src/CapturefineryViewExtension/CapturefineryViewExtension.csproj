@@ -142,8 +142,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(ProjectDir)bin\Release\CapturefineryViewExtension.dll" "%25appdata%25\Dynamo\Dynamo Core\2.0\packages\Capturefinery\bin" /Y /E
-xcopy "$(ProjectDir)bin\Release\CapturefineryViewExtension_ViewExtensionDefinition.xml" "%25appdata%25\Dynamo\Dynamo Core\2.0\packages\Capturefinery\extra" /Y /E</PostBuildEvent>
+    <PostBuildEvent>xcopy "$(ProjectDir)bin\Debug\CapturefineryViewExtension.dll" "%25appdata%25\Dynamo\Dynamo Core\2.0\packages\Capturefinery\bin" /Y /E
+xcopy "$(ProjectDir)bin\Debug\CapturefineryViewExtension_ViewExtensionDefinition.xml" "%25appdata%25\Dynamo\Dynamo Core\2.0\packages\Capturefinery\extra" /Y /E</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -130,17 +130,26 @@ namespace CapturefineryViewExtension
           var viewModel = MainGrid.DataContext as CapturefineryWindowViewModel;
           if (viewModel != null)
           {
-            // Check whether the item selected is an empty value
+            var levels = viewModel.GetSortLevels();
 
-            if (e.AddedItems.Count > 0 && e.AddedItems[0].ToString() == viewModel.EmptyComboValue)
+            if (e.RemovedItems.Count == 0 || e.AddedItems.Count > 0)
             {
-              // Clear the values
+              // Check whether the item selected is an empty value
 
-              viewModel.RemoveSortLevels(level.Number + 1);
-            }
-            else
-            {
-              viewModel.AddSortLevel();
+              if (e.AddedItems.Count > 0 && e.AddedItems[0].ToString() == viewModel.EmptyComboValue)
+              {
+                // Clear the values
+
+                viewModel.RemoveSortLevels(level.Number + 1);
+              }
+              else if (level.Number == levels.Length - 1)
+              {
+                viewModel.AddSortLevel();
+              }
+              else
+              {
+                viewModel.UpdateSortLevels();
+              }
             }
           }
         }
