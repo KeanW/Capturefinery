@@ -1,5 +1,4 @@
-﻿using System;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
@@ -25,7 +24,7 @@ namespace CapturefineryViewExtension
       _hof = null;
     }
 
-    private async void OnDataGridSelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void OnDataGridSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
       var viewModel = MainGrid.DataContext as CapturefineryWindowViewModel;
       if (e.AddedItems.Count > 0)
@@ -79,7 +78,7 @@ namespace CapturefineryViewExtension
       }
     }
 
-    private async void OnCancelButtonClick(object sender, RoutedEventArgs e)
+    private void OnCancelButtonClick(object sender, RoutedEventArgs e)
     {
       var viewModel = MainGrid.DataContext as CapturefineryWindowViewModel;
       if (viewModel != null)
@@ -133,7 +132,7 @@ namespace CapturefineryViewExtension
           {
             // Check whether the item selected is an empty value
 
-            if (e.AddedItems.Count > 0 && e.AddedItems[0] == viewModel.EmptyComboValue)
+            if (e.AddedItems.Count > 0 && e.AddedItems[0].ToString() == viewModel.EmptyComboValue)
             {
               // Clear the values
 

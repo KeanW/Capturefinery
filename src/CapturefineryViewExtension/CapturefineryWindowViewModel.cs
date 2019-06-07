@@ -1,11 +1,7 @@
 ﻿using CoreNodeModels.Input;
-using Dynamo.Core;
 using Dynamo.Events;
 using Dynamo.Extensions;
 using Dynamo.Graph.Nodes;
-using Dynamo.Graph.Nodes;
-using Dynamo.Graph.Workspaces;
-using Dynamo.Models;
 using Dynamo.ViewModels;
 using Newtonsoft.Json;
 using System;
@@ -17,15 +13,11 @@ using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Media;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Forms;
 using System.Windows.Interop;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Clipboard = System.Windows.Clipboard;
@@ -64,36 +56,55 @@ namespace CapturefineryViewExtension
     public string Name
     {
       get { return _name; }
-      set { _name = value; RaisePropertyChanged("Name"); }
+      set
+      {
+        _name = value;
+        OnPropertyChanged();
+      }
     }
     public string Parameter
     {
       get { return _parameter; }
-      set { _parameter = value; RaisePropertyChanged("Parameter"); }
+      set
+      {
+        _parameter = value;
+        OnPropertyChanged();
+      }
     }
     public int Number
     {
       get { return _number; }
-      set { _number = value; RaisePropertyChanged("Number"); }
+      set
+      {
+        _number = value;
+        OnPropertyChanged();
+      }
     }
     public string[] Parameters
     {
       get { return _parameters; }
-      set { _parameters = value; RaisePropertyChanged("Parameters"); }
+      set
+      {
+        _parameters = value;
+        OnPropertyChanged();
+      }
     }
   }
 
   public abstract class ObservableObject : INotifyPropertyChanged
   {
     public event PropertyChangedEventHandler PropertyChanged;
-    protected void RaisePropertyChanged(string propertyName)
+
+    public void OnPropertyChanged([CallerMemberName]string propertyName = null)
     {
-      var handler = PropertyChanged;
-      if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
+      if (PropertyChanged != null)
+      {
+        PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+      }
     }
   }
 
-  public class CapturefineryWindowViewModel : NotificationObject, INotifyPropertyChanged, IDisposable
+  public class CapturefineryWindowViewModel : ObservableObject, IDisposable
   {
     private ObservableCollection<StudyInfo> _refineryStudies;
     private ReadyParams _readyParams;
@@ -240,16 +251,6 @@ namespace CapturefineryViewExtension
     }
 
     public ObservableCollection<SortLevel> SortLevels { get; set; }
-
-    public event PropertyChangedEventHandler PropertyChanged;
-
-    public void OnPropertyChanged([CallerMemberName]string propertyName = null)
-    {
-      if (PropertyChanged != null)
-      {
-        PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-      }
-    }
 
     // Construction & disposal
 
@@ -456,7 +457,7 @@ namespace CapturefineryViewExtension
           if (_captureErrors && runsWithErrors.Count > 0 && !study.Folder.EndsWith(errorsSuffix))
           {
             SaveFilteredHallOfFame(study, study.Folder + errorsSuffix, runsWithErrors);
-            RaisePropertyChanged("RefineryTasks");
+            OnPropertyChanged("RefineryTasks");
           }
         }
 
@@ -554,7 +555,7 @@ namespace CapturefineryViewExtension
         _parameterList.AddRange(hof.variables);
         RemoveSortLevels(0);
         AddSortLevel();
-        RaisePropertyChanged("SortLevels");
+        OnPropertyChanged("SortLevels");
       }
       return fof.hallOfFame;
     }

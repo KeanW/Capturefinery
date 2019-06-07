@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Dynamo.ViewModels;
+using Dynamo.Wpf.Extensions;
+using System;
 using System.Windows;
 using System.Windows.Controls;
-using Dynamo.Wpf.Extensions;
-using Dynamo.ViewModels;
 
 namespace CapturefineryViewExtension
 {
