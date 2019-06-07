@@ -120,57 +120,7 @@ namespace CapturefineryViewExtension
       ProgressGrid.Visibility = show;
     }
 
-    /*
     private void OnSortComboSelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-      var combo = sender as ComboBox;
-
-      const string prefix = "SortLevelComboBox";
-
-      if (combo != null)
-      {
-        var name = combo.Name;
-        if (name.StartsWith(prefix))
-        {
-          var viewModel = MainGrid.DataContext as CapturefineryWindowViewModel;
-          if (viewModel != null)
-          {
-            var number = Int32.Parse(name.Substring(prefix.Length)) - 1;
-            if (number >= 0 && number < viewModel.SortParameterNumber)
-            {
-              // Check whether the item selected is an empty value
-
-              if (e.AddedItems.Count > 0 && e.AddedItems[0] == viewModel.EmptyComboValue)
-              {
-                // Clear the values
-
-                viewModel.ClearSortParameters(number);
-
-                // Hide the grid rows
-
-                var hide = new GridLength(0);
-                for (int i = startSortRow + number; i < startSortRow + viewModel.SortParameterNumber - 1; i++)
-                {
-                  TaskOptions.RowDefinitions[i].Height = hide;
-                }
-              }
-              else
-              {
-                if (number < viewModel.SortParameterNumber - 1)
-                {
-                  var show = new GridLength(0, GridUnitType.Auto);
-                  TaskOptions.RowDefinitions[startSortRow + number].Height = show;
-                  viewModel.UpdateSortParameterLists();
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    */
-
-    private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
       var combo = sender as ComboBox;
       if (combo != null)
@@ -191,8 +141,7 @@ namespace CapturefineryViewExtension
             }
             else
             {
-              var nextNumber = level.Number + 1;
-              viewModel.AddSortLevel(nextNumber);
+              viewModel.AddSortLevel();
             }
           }
         }

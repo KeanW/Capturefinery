@@ -175,12 +175,6 @@ namespace CapturefineryViewExtension
       set
       {
         _createAnimations = value;
-        if (!value)
-        {
-          // If toggling animation creation off, clear the loading of images
-
-          LoadImages = false;
-        }
         OnPropertyChanged();
       }
     }
@@ -286,7 +280,6 @@ namespace CapturefineryViewExtension
       MaxItems = max;
       Start = 0;
       Items = max;
-      //RemoveSortLevels(0);
     }
 
     public ObservableCollection<StudyInfo> RefineryTasks
@@ -559,23 +552,13 @@ namespace CapturefineryViewExtension
         _parameterList.Add(EmptyComboValue); // This means we clear the setting
         _parameterList.AddRange(hof.goals);
         _parameterList.AddRange(hof.variables);
-        AddSortLevel(0);
+        RemoveSortLevels(0);
+        AddSortLevel();
         RaisePropertyChanged("SortLevels");
       }
       return fof.hallOfFame;
     }
     
-    public void AddSortLevel(int levelNumber)
-    {
-      if (levelNumber >= SortLevels.Count)
-      {
-        var existing = from level in SortLevels where level.Number < levelNumber select level.Parameter;
-        var pars = from param in _parameterList where !existing.Contains(param) select param;
-        SortLevels.Add(new SortLevel { Name = Ordinal(levelNumber + 1) + " sorting level", Number = levelNumber, Parameter = null, Parameters = pars.ToArray() });
-      }
-      UpdateSortLevels();
-    }
-
     public void UpdateSortLevels()
     {
       var existing = from level in SortLevels select level.Parameter;
@@ -592,12 +575,25 @@ namespace CapturefineryViewExtension
       return existing.ToArray();
     }
 
+    public void AddSortLevel()
+    {
+      var levelNumber = SortLevels.Count;
+      if (levelNumber < _parameterList.Count - 1)
+      {
+        var existing = from level in SortLevels where level.Number < levelNumber select level.Parameter;
+        var pars = from param in _parameterList where !existing.Contains(param) select param;
+        SortLevels.Add(new SortLevel { Name = Ordinal(levelNumber + 1) + " sorting level", Number = levelNumber, Parameter = null, Parameters = pars.ToArray() });
+      }
+      UpdateSortLevels();
+    }
+
     public void RemoveSortLevels(int startLevel)
     {
       while (SortLevels.Count > startLevel)
       {
         SortLevels.RemoveAt(startLevel);
       }
+      UpdateSortLevels();
     }
 
     public static string Ordinal(int number)
