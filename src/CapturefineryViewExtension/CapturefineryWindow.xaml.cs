@@ -13,8 +13,6 @@ namespace CapturefineryViewExtension
     private StudyInfo _study;
     private HallOfFame _hof;
 
-    const int startSortRow = 8;
-
     public CapturefineryWindow()
     {
       InitializeComponent();
@@ -106,26 +104,11 @@ namespace CapturefineryViewExtension
     {
       var val = check ? new GridLength(0, GridUnitType.Auto) : new GridLength(0);
 
-      // Show/hide the load image checkbox, root filename and first sort combo
+      // Show/hide the load image checkbox, root filename and sort levels
 
       TaskOptions.RowDefinitions[5].Height = val;
       TaskOptions.RowDefinitions[6].Height = val;
       TaskOptions.RowDefinitions[7].Height = val;
-
-      // Optionally hide the sort combos after the first one
-
-      if (!check || forceHide)
-      {
-        var viewModel = MainGrid.DataContext as CapturefineryWindowViewModel;
-        if (viewModel != null)
-        {
-          var hide = new GridLength(0);
-          for (int i = 0; i < viewModel.SortParameterNumber - 1; i++)
-          {
-            TaskOptions.RowDefinitions[startSortRow + i].Height = hide;
-          }
-        }
-      }
     }
 
     private void ShowProgress(bool showProgress)
@@ -137,6 +120,7 @@ namespace CapturefineryViewExtension
       ProgressGrid.Visibility = show;
     }
 
+    /*
     private void OnSortComboSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
       var combo = sender as ComboBox;
@@ -179,6 +163,36 @@ namespace CapturefineryViewExtension
                   viewModel.UpdateSortParameterLists();
                 }
               }
+            }
+          }
+        }
+      }
+    }
+    */
+
+    private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+      var combo = sender as ComboBox;
+      if (combo != null)
+      {
+        var level = combo.DataContext as SortLevel;
+        if (level != null)
+        {
+          var viewModel = MainGrid.DataContext as CapturefineryWindowViewModel;
+          if (viewModel != null)
+          {
+            // Check whether the item selected is an empty value
+
+            if (e.AddedItems.Count > 0 && e.AddedItems[0] == viewModel.EmptyComboValue)
+            {
+              // Clear the values
+
+              viewModel.RemoveSortLevels(level.Number + 1);
+            }
+            else
+            {
+              var nextNumber = level.Number + 1;
+              viewModel.AddSortLevel(nextNumber);
             }
           }
         }

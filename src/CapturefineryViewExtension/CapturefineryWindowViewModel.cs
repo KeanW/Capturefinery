@@ -22,6 +22,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Forms;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -53,6 +54,45 @@ namespace CapturefineryViewExtension
     public string endpoint;
   }
 
+  public class SortLevel : ObservableObject
+  {
+    private string _name;
+    private string _parameter;
+    private int _number;
+    private string[] _parameters;
+
+    public string Name
+    {
+      get { return _name; }
+      set { _name = value; RaisePropertyChanged("Name"); }
+    }
+    public string Parameter
+    {
+      get { return _parameter; }
+      set { _parameter = value; RaisePropertyChanged("Parameter"); }
+    }
+    public int Number
+    {
+      get { return _number; }
+      set { _number = value; RaisePropertyChanged("Number"); }
+    }
+    public string[] Parameters
+    {
+      get { return _parameters; }
+      set { _parameters = value; RaisePropertyChanged("Parameters"); }
+    }
+  }
+
+  public abstract class ObservableObject : INotifyPropertyChanged
+  {
+    public event PropertyChangedEventHandler PropertyChanged;
+    protected void RaisePropertyChanged(string propertyName)
+    {
+      var handler = PropertyChanged;
+      if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
+    }
+  }
+
   public class CapturefineryWindowViewModel : NotificationObject, INotifyPropertyChanged, IDisposable
   {
     private ObservableCollection<StudyInfo> _refineryStudies;
@@ -74,11 +114,8 @@ namespace CapturefineryViewExtension
     private bool _escapePressed;
     private bool _executeEnabled;
     private string _executeText;
-    private Dispatcher _dispatcherUIThread;
-    private string[] _sortParameters;
     private List<string> _parameterList;
-    private IEnumerable<string>[] _parameterLists;
-    public readonly int SortParameterNumber = 10;
+    private Dispatcher _dispatcherUIThread;
 
     const string enableText = "Click here to launch a capture run. It may take some time, but can be canceled.";
     const string disableText = "Capture canceled; another can be started when current run completes.";
@@ -208,62 +245,7 @@ namespace CapturefineryViewExtension
       }
     }
 
-    internal void ClearSortParameters(int start)
-    {
-      for (int i = start; i < SortParameterNumber; i++)
-      {
-        _sortParameters[i] = null;
-      }
-      OnPropertyChanged(nameof(SortParameters));
-    }
-
-    public string[] SortParameters
-    {
-      get { return _sortParameters; }
-      set
-      {
-        _sortParameters = value;
-        OnPropertyChanged();
-        OnPropertyChanged(nameof(ParameterLists));
-      }
-    }
-
-    internal void UpdateSortParameterLists()
-    {
-      OnPropertyChanged(nameof(ParameterLists));
-    }
-
-    public List<string> ParameterList
-    {
-      get { return _parameterList; }
-      set
-      {
-        _parameterList = value;
-        OnPropertyChanged();
-      }
-    }
-
-    public IEnumerable<string>[] ParameterLists
-    {
-      get
-      {
-        for (int i = 0; i < SortParameterNumber; i++)
-        {
-          var parameter = _sortParameters[i];
-          _parameterLists[i] = ParameterList.Where(o => o == parameter || !_sortParameters.Contains(o));
-          if (parameter == null)
-          {
-            break;
-          }
-        }
-        return _parameterLists;
-      }
-      set
-      {
-        _parameterLists = value;
-        OnPropertyChanged();
-      }
-    }
+    public ObservableCollection<SortLevel> SortLevels { get; set; }
 
     public event PropertyChangedEventHandler PropertyChanged;
 
@@ -290,10 +272,9 @@ namespace CapturefineryViewExtension
       _executeEnabled = true;
       _progress = 0.0;
       _executeText = enableText;
-      _sortParameters = new string[SortParameterNumber];
       _parameterList = new List<string>();
-      _parameterLists = new IEnumerable<string>[SortParameterNumber];
       _dispatcherUIThread = System.Windows.Application.Current.Dispatcher;
+      SortLevels = new ObservableCollection<SortLevel>();
     }
 
     public void Dispose()
@@ -305,7 +286,7 @@ namespace CapturefineryViewExtension
       MaxItems = max;
       Start = 0;
       Items = max;
-      ClearSortParameters(0);
+      //RemoveSortLevels(0);
     }
 
     public ObservableCollection<StudyInfo> RefineryTasks
@@ -456,7 +437,8 @@ namespace CapturefineryViewExtension
         {
           if (_createAnimations)
           {
-            var order = GetSolutionOrder(hof, _sortParameters);
+            var levels = GetSortLevels();
+            var order = GetSolutionOrder(hof, levels);
 
             var rootName = StripInvalidFileAndPathCharacters(_rootName);
 
@@ -576,10 +558,81 @@ namespace CapturefineryViewExtension
         _parameterList.Clear();
         _parameterList.Add(EmptyComboValue); // This means we clear the setting
         _parameterList.AddRange(hof.goals);
-        ParameterList.AddRange(hof.variables);
-        OnPropertyChanged(nameof(ParameterLists));
+        _parameterList.AddRange(hof.variables);
+        AddSortLevel(0);
+        RaisePropertyChanged("SortLevels");
       }
       return fof.hallOfFame;
+    }
+    
+    public void AddSortLevel(int levelNumber)
+    {
+      if (levelNumber >= SortLevels.Count)
+      {
+        var existing = from level in SortLevels where level.Number < levelNumber select level.Parameter;
+        var pars = from param in _parameterList where !existing.Contains(param) select param;
+        SortLevels.Add(new SortLevel { Name = Ordinal(levelNumber + 1) + " sorting level", Number = levelNumber, Parameter = null, Parameters = pars.ToArray() });
+      }
+      UpdateSortLevels();
+    }
+
+    public void UpdateSortLevels()
+    {
+      var existing = from level in SortLevels select level.Parameter;
+      foreach (var level in SortLevels)
+      {
+        var pars = from param in _parameterList where param == level.Parameter || !existing.Contains(param) select param;
+        level.Parameters = pars.ToArray();
+      }
+    }
+
+    public string[] GetSortLevels()
+    {
+      var existing = from level in SortLevels select level.Parameter;
+      return existing.ToArray();
+    }
+
+    public void RemoveSortLevels(int startLevel)
+    {
+      while (SortLevels.Count > startLevel)
+      {
+        SortLevels.RemoveAt(startLevel);
+      }
+    }
+
+    public static string Ordinal(int number)
+    {
+      string suffix = string.Empty;
+
+      int ones = number % 10;
+      int tens = (int)Math.Floor(number / 10M) % 10;
+
+      if (tens == 1)
+      {
+        suffix = "th";
+      }
+      else
+      {
+        switch (ones)
+        {
+          case 1:
+            suffix = "st";
+            break;
+
+          case 2:
+            suffix = "nd";
+            break;
+
+          case 3:
+            suffix = "rd";
+            break;
+
+          default:
+            suffix = "th";
+            break;
+        }
+      }
+      return string.Format("{0}{1}", number, suffix);
     }
 
     public int[] GetSolutionOrder(HallOfFame hof, string[] parameters)
