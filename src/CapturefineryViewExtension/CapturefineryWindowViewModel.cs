@@ -109,6 +109,7 @@ namespace CapturefineryViewExtension
     private ObservableCollection<StudyInfo> _refineryStudies;
     private ReadyParams _readyParams;
     private DynamoViewModel _dynamoViewModel;
+
     private string _file = "";
 
     [System.Runtime.InteropServices.DllImport("gdi32.dll")]
@@ -127,6 +128,7 @@ namespace CapturefineryViewExtension
     private string _executeText;
     private List<string> _parameterList;
     private Dispatcher _dispatcherUIThread;
+    private string _folder;
 
     const string enableText = "Click here to launch a capture run. It may take some time, but can be canceled.";
     const string disableText = "Capture canceled; another can be started when current run completes.";
@@ -276,6 +278,16 @@ namespace CapturefineryViewExtension
     {
     }
 
+    internal void LogException(Exception ex)
+    {
+      using (var sw = new StreamWriter(_folder + "\\errors.log", true))
+      {
+        sw.WriteLine(System.DateTime.Now + ": " + ex.Message);
+        sw.WriteLine(System.DateTime.Now + ": " + ex.StackTrace);
+        sw.Close();
+      }
+    }
+
     internal void InitProperties(int max)
     {
       MaxItems = max;
@@ -318,6 +330,12 @@ namespace CapturefineryViewExtension
 
     public async Task RunTasks(StudyInfo study, HallOfFame hof = null)
     {
+      _folder = study.Folder + "\\screenshots";
+      if (!System.IO.Directory.Exists(_folder))
+      {
+        System.IO.Directory.CreateDirectory(_folder);
+      }
+
       if (
         Start >= 0 && Start < _maxItems &&
         Items >= 0 && Items <= _maxItems &&
@@ -330,18 +348,13 @@ namespace CapturefineryViewExtension
         var errorImages = new Bitmap[_maxItems];
         var runsWithErrors = new List<int>();
         Progress = 0;
-
-        var folder = study.Folder + "\\screenshots";
-        if (!System.IO.Directory.Exists(folder))
-        {
-          System.IO.Directory.CreateDirectory(folder);
-        }
+        Escape = false;
 
         // Pre-load any existing images that come before the chosen range, if this option was selected
 
         if (_createAnimations && _loadImages && counter > 0)
         {
-          LoadExistingImages(images, _captureErrors ? errorImages : null, folder, 0, counter);
+          LoadExistingImages(images, _captureErrors ? errorImages : null, _folder, 0, counter);
         }
 
         // Define and attach the main post-execution handler
@@ -372,7 +385,7 @@ namespace CapturefineryViewExtension
                 }
               }
 
-              var img = SaveScreenshot(GetImageFilename(folder, counter, isError));
+              var img = SaveScreenshot(GetImageFilename(_folder, counter, isError));
               if (isError)
               {
                 errorImages[counter] = img;
@@ -432,7 +445,7 @@ namespace CapturefineryViewExtension
 
         if (_createAnimations && _loadImages && counter + 1 < _maxItems)
         {
-          LoadExistingImages(images, _captureErrors ? errorImages : null, folder, counter + 1, _maxItems);
+          LoadExistingImages(images, _captureErrors ? errorImages : null, _folder, counter + 1, _maxItems);
         }
 
         if (!_escapePressed)
@@ -446,16 +459,16 @@ namespace CapturefineryViewExtension
 
             if (!images.All<Bitmap>((b) => b == null))
             {
-              SaveAnimation(images, order, folder + "\\" + rootName + ".gif");
-              SaveAnimation(images, order, folder + "\\" + rootName + "-small.gif", 1000);
-              SaveAnimation(images, order, folder + "\\" + rootName + "-tiny.gif", 500);
+              SaveAnimation(images, order, _folder + "\\" + rootName + ".gif");
+              SaveAnimation(images, order, _folder + "\\" + rootName + "-small.gif", 1000);
+              SaveAnimation(images, order, _folder + "\\" + rootName + "-tiny.gif", 500);
             }
 
             if (!errorImages.All<Bitmap>((b) => b == null))
             {
-              SaveAnimation(errorImages, order, folder + "\\" + rootName + "-errors.gif");
-              SaveAnimation(errorImages, order, folder + "\\" + rootName + "-errors-small.gif", 1000);
-              SaveAnimation(errorImages, order, folder + "\\" + rootName + "-errors-tiny.gif", 500);
+              SaveAnimation(errorImages, order, _folder + "\\" + rootName + "-errors.gif");
+              SaveAnimation(errorImages, order, _folder + "\\" + rootName + "-errors-small.gif", 1000);
+              SaveAnimation(errorImages, order, _folder + "\\" + rootName + "-errors-tiny.gif", 500);
             }
           }
 
@@ -493,7 +506,7 @@ namespace CapturefineryViewExtension
                                       MessageBoxImage.Question);
         if (result == MessageBoxResult.Yes)
         {
-          Clipboard.SetText(folder);
+          Clipboard.SetText(_folder);
         }
       }
     }
@@ -655,7 +668,7 @@ namespace CapturefineryViewExtension
         res[i] = i;
       }
 
-      if (parameters.Length > 0)
+      if (parameters.Length > 0 && !(parameters.Length == 1 && parameters[0] == null))
       {
         var idx = GetParameterIndex(hof, parameters[0]);
         var selected = hof.solutions.Select((item, index) => new { item, index });
@@ -741,19 +754,19 @@ namespace CapturefineryViewExtension
       {
         var nodeType = node.GetType();
 
-        if (nodeType == typeof(DoubleSlider))
+        if (node is DoubleSlider)
         {
-          var slider = node as DoubleSlider;
+          var slider = (DoubleSlider)node;
           slider.Value = Convert.ToDouble(parameterValue, CultureInfo.InvariantCulture);
         }
-        else if (nodeType == typeof(IntegerSlider))
+        else if (node is IntegerSlider)
         {
-          var slider = node as IntegerSlider;
+          var slider = (IntegerSlider)node;
           slider.Value = Convert.ToInt32(parameterValue, CultureInfo.InvariantCulture);
         }
-        else if (nodeType == typeof(BoolSelector))
+        else if (node is BoolSelector)
         {
-          var selector = node as BoolSelector;
+          var selector = (BoolSelector)node;
           selector.Value = parameterValue == "1" || parameterValue == "true";
         }
       }
@@ -761,7 +774,7 @@ namespace CapturefineryViewExtension
 
     private void StartDynamoRun()
     {
-      var cmd = new Dynamo.Models.DynamoModel.RunCancelCommand(false, false);
+      var cmd = new Dynamo.Models.DynamoModel.ForceRunCancelCommand(false, false);
       _dynamoViewModel.ExecuteCommand(cmd);
     }
 

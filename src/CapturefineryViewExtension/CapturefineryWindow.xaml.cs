@@ -73,7 +73,18 @@ namespace CapturefineryViewExtension
       if (_study != null && viewModel != null)
       {
         ShowProgress(true);
-        await viewModel.RunTasks(_study, _hof);
+        try
+        {
+          await viewModel.RunTasks(_study, _hof);
+        }
+        catch(System.Exception ex)
+        {
+          MessageBox.Show("Please check the log in the output folder.",
+                          "Error running task",
+                          MessageBoxButton.OK,
+                          MessageBoxImage.Error);
+          viewModel.LogException(ex);
+        }
         ShowProgress(false);
       }
     }
@@ -117,6 +128,11 @@ namespace CapturefineryViewExtension
       TaskOptions.Visibility = hide;
       StudyList.Visibility = hide;
       ProgressGrid.Visibility = show;
+      var viewModel = MainGrid.DataContext as CapturefineryWindowViewModel;
+      if (viewModel != null)
+      {
+        viewModel.Progress = 0;
+      }
     }
 
     private void OnSortComboSelectionChanged(object sender, SelectionChangedEventArgs e)
