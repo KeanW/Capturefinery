@@ -129,6 +129,7 @@ namespace CapturefineryViewExtension
     private List<string> _parameterList;
     private Dispatcher _dispatcherUIThread;
     private string _folder;
+    private Dynamo.Models.RunType _previousRunType;
 
     const string enableText = "Click here to launch a capture run. It may take some time, but can be canceled.";
     const string disableText = "Capture canceled; another can be started when current run completes.";
@@ -357,6 +358,9 @@ namespace CapturefineryViewExtension
           LoadExistingImages(images, _captureErrors ? errorImages : null, _folder, 0, counter);
         }
 
+        _previousRunType = _dynamoViewModel.HomeSpace.RunSettings.RunType;
+        _dynamoViewModel.HomeSpace.RunSettings.RunType = Dynamo.Models.RunType.Manual;
+
         // Define and attach the main post-execution handler
 
         ExecutionStateHandler postExecution =
@@ -440,6 +444,8 @@ namespace CapturefineryViewExtension
             }
           }
         }
+
+        _dynamoViewModel.HomeSpace.RunSettings.RunType = _previousRunType;
 
         // Post-load any existing images that come after the chosen range, if this option was selected
 
