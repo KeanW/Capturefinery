@@ -118,8 +118,11 @@ namespace CapturefineryViewExtension
     private int _start;
     private int _items;
     private int _maxItems;
+    private int _maxHofItems;
+    private int _maxCompleteItems;
     private double _progress;
     private bool _captureErrors;
+    private bool _useComplete;
     private bool _createAnimations;
     private string _rootName;
     private bool _loadImages;
@@ -179,6 +182,17 @@ namespace CapturefineryViewExtension
       set
       {
         _captureErrors = value;
+        OnPropertyChanged();
+      }
+    }
+
+    public bool UseComplete
+    {
+      get { return _useComplete; }
+      set
+      {
+        _useComplete = value;
+        InitProperties(_maxHofItems, _maxCompleteItems, _useComplete);
         OnPropertyChanged();
       }
     }
@@ -271,7 +285,7 @@ namespace CapturefineryViewExtension
       _progress = 0.0;
       _executeText = enableText;
       _parameterList = new List<string>();
-      _dispatcherUIThread = System.Windows.Application.Current.Dispatcher;
+      _dispatcherUIThread = Dispatcher.CurrentDispatcher;
       SortLevels = new ObservableCollection<SortLevel>();
     }
 
@@ -289,11 +303,13 @@ namespace CapturefineryViewExtension
       }
     }
 
-    internal void InitProperties(int max)
+    internal void InitProperties(int hofMax, int completeMax, bool useComplete)
     {
-      MaxItems = max;
+      _maxHofItems = hofMax;
+      _maxCompleteItems = completeMax;
+      MaxItems = useComplete ? completeMax : hofMax;
+      Items = MaxItems;
       Start = 0;
-      Items = max;
     }
 
     public ObservableCollection<StudyInfo> RefineryTasks
@@ -329,7 +345,7 @@ namespace CapturefineryViewExtension
       return new ObservableCollection<StudyInfo>(nodeList);
     }
 
-    public async Task RunTasks(StudyInfo study, HallOfFame hof = null)
+    public async Task RunTasks(StudyInfo study, HallOfFame hof = null, HallOfFame complete = null)
     {
       _folder = study.Folder + "\\screenshots";
       if (!System.IO.Directory.Exists(_folder))
@@ -586,7 +602,62 @@ namespace CapturefineryViewExtension
       }
       return fof.hallOfFame;
     }
-    
+
+    public HallOfFame GetComplete(StudyInfo study, HallOfFame hof)
+    {
+      var localFile = string.Format(@"Refinery\hof_hist-results-{0}.csv", study.Name);
+      var fileName = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        localFile
+      );
+      if (File.Exists(fileName))
+      {
+        var expected = hof.variables.Length + hof.goals.Length;
+        using (var reader = new StreamReader(fileName))
+        {
+          var lines = new List<string>();
+          var curGen = 0;
+          var curGenSize = 0;
+          var firstLine = reader.ReadLine();
+          var firstValues = firstLine.Split(',');
+          var genCount = Int32.Parse(firstValues[1]);
+          var genSizes = new int[genCount];
+
+          while (!reader.EndOfStream)
+          {
+            var line = reader.ReadLine();
+            var values = line.Split(',');
+
+            if (values.Length < expected)
+            {
+              if (curGenSize > 0)
+              {
+                genSizes[curGen] = curGenSize;
+                curGenSize = 0;
+                curGen++;
+              }
+            }
+            else
+            {
+              float empty;
+              if (values.All(s => float.TryParse(s, out empty)) && !lines.Contains(line))
+              {
+                lines.Add(line);
+                curGenSize++;
+              }
+            }
+          }
+          var solutions = new string[lines.Count][];
+          for (int i=0; i < lines.Count; i++)
+          {
+            solutions[i] = lines[i].Split(',');
+          }
+          hof.solutions = solutions;
+        }
+      }
+      return hof;
+    }
+
     public void UpdateSortLevels()
     {
       var existing = from level in SortLevels select level.Parameter;

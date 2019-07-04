@@ -11,6 +11,7 @@ namespace CapturefineryViewExtension
   {
     private StudyInfo _study;
     private HallOfFame _hof;
+    private HallOfFame _complete;
 
     public CapturefineryWindow()
     {
@@ -40,7 +41,9 @@ namespace CapturefineryViewExtension
         if (_study != null && viewModel != null)
         {
           _hof = viewModel.GetHallOfFame(_study);
-          viewModel.InitProperties(_hof.solutions.Length);
+          _complete = viewModel.GetHallOfFame(_study); // Get it twice to avoid cloning
+          _complete = viewModel.GetComplete(_study, _complete);
+          viewModel.InitProperties(_hof.solutions.Length, _complete.solutions.Length, viewModel.UseComplete);
 
           DisplayOrHideControls(true, true);
         }
@@ -116,9 +119,9 @@ namespace CapturefineryViewExtension
 
       // Show/hide the load image checkbox, root filename and sort levels
 
-      TaskOptions.RowDefinitions[5].Height = val;
       TaskOptions.RowDefinitions[6].Height = val;
       TaskOptions.RowDefinitions[7].Height = val;
+      TaskOptions.RowDefinitions[8].Height = val;
     }
 
     private void ShowProgress(bool showProgress)

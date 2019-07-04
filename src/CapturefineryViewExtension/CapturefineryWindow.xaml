@@ -95,6 +95,7 @@
                 <RowDefinition Height="30"/>
                 <RowDefinition Height="30"/>
                 <RowDefinition Height="30"/>
+                <RowDefinition Height="30"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -107,12 +108,13 @@
             <Label x:Name="ItemsLabel" Content="Number of items to capture" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="2" />
             <TextBox x:Name="ItemsText" TextWrapping="Wrap" Text="{Binding Items,ValidatesOnExceptions=True}" HorizontalAlignment="Right" VerticalAlignment="Center" Width="53" Height="24" MinWidth="20" MinHeight="24" Grid.Column="1" Grid.Row="2" TextAlignment="Right" />
             <CheckBox x:Name="ErrorCheck" Content="Capture and separate errors" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="3" IsChecked="{Binding CaptureErrors}"/>
-            <CheckBox x:Name="AnimateCheck" Content="Create animations" Checked="OnAnimateChecked" Unchecked="OnAnimateChecked" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="4" IsChecked="{Binding CreateAnimations}"/>
-            <Label x:Name="RootLabel" Content="Root name for animation files" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="5" />
-            <TextBox x:Name="RootText" TextWrapping="Wrap" Text="{Binding RootName}" HorizontalAlignment="Stretch" VerticalAlignment="Center" Width="Auto" Height="24" MinWidth="20" MinHeight="24" Grid.Column="1" Grid.Row="5" TextAlignment="Left" Margin="5,0,0,0" />
-            <CheckBox x:Name="LoadCheck" Content="Load existing images" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="15,5,0,5" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="6" IsChecked="{Binding LoadImages}"/>
-            <ItemsControl ItemsSource="{Binding Path=SortLevels}" ItemTemplate="{StaticResource SortLevelTemplate}" Margin="10,0,0,0" Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" />
-            <Button x:Name="ExecuteButton" Content="Capture" HorizontalAlignment="Center" VerticalAlignment="Center" Width="150" Height="25" MinWidth="75" MinHeight="21" IsDefault="True" Grid.Column="0" Grid.ColumnSpan="2" Click="OnExecuteButtonClick" IsEnabled="{Binding ExecuteEnabled}" Grid.Row="9">
+            <CheckBox x:Name="UseCompleteCheck" Content="Include intermediate results" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="4" IsChecked="{Binding UseComplete}"/>
+            <CheckBox x:Name="AnimateCheck" Content="Create animations" Checked="OnAnimateChecked" Unchecked="OnAnimateChecked" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="5" IsChecked="{Binding CreateAnimations}"/>
+            <Label x:Name="RootLabel" Content="Root name for animation files" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="6" />
+            <TextBox x:Name="RootText" TextWrapping="Wrap" Text="{Binding RootName}" HorizontalAlignment="Stretch" VerticalAlignment="Center" Width="Auto" Height="24" MinWidth="20" MinHeight="24" Grid.Column="1" Grid.Row="7" TextAlignment="Left" Margin="5,0,0,0" />
+            <CheckBox x:Name="LoadCheck" Content="Load existing images" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="15,5,0,5" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="7" IsChecked="{Binding LoadImages}"/>
+            <ItemsControl ItemsSource="{Binding Path=SortLevels}" ItemTemplate="{StaticResource SortLevelTemplate}" Margin="10,0,0,0" Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" />
+            <Button x:Name="ExecuteButton" Content="Capture" HorizontalAlignment="Center" VerticalAlignment="Center" Width="150" Height="25" MinWidth="75" MinHeight="21" IsDefault="True" Grid.Column="0" Grid.ColumnSpan="2" Click="OnExecuteButtonClick" IsEnabled="{Binding ExecuteEnabled}" Grid.Row="10">
                 <Button.ToolTip>
                     <ToolTip Content="{Binding ExecuteText}" />
                 </Button.ToolTip>
