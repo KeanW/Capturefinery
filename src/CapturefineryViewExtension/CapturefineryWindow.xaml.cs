@@ -78,7 +78,7 @@ namespace CapturefineryViewExtension
         ShowProgress(true);
         try
         {
-          await viewModel.RunTasks(_study, _hof);
+          await viewModel.RunTasks(_study, _hof, _complete);
         }
         catch(System.Exception ex)
         {

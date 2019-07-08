@@ -345,13 +345,25 @@ namespace CapturefineryViewExtension
       return new ObservableCollection<StudyInfo>(nodeList);
     }
 
-    public async Task RunTasks(StudyInfo study, HallOfFame hof = null, HallOfFame complete = null)
+    public async Task RunTasks(StudyInfo study, HallOfFame hof, HallOfFame complete)
     {
+      if (hof == null && complete == null)
+      {
+        return;
+      }
+
+
+      var toRun = (_useComplete && complete != null) ? complete : hof;
+
       _folder = study.Folder + "\\screenshots";
       if (!System.IO.Directory.Exists(_folder))
       {
         System.IO.Directory.CreateDirectory(_folder);
       }
+
+      // Shouldn't really be necessary
+
+      _maxItems = toRun.solutions.Length;
 
       if (
         Start >= 0 && Start < _maxItems &&
@@ -424,18 +436,13 @@ namespace CapturefineryViewExtension
 
         ExecutionEvents.GraphPostExecution += postExecution;
 
-        if (hof == null)
-        {
-          hof = GetHallOfFame(study);
-        }
-
         if (Items == 0)
         {
           Progress = 100;
         }
         else
         {
-          var nodeMap = GetDynamoNodesForInputParameters(hof.variables, _readyParams.CurrentWorkspaceModel.Nodes);
+          var nodeMap = GetDynamoNodesForInputParameters(toRun.variables, _readyParams.CurrentWorkspaceModel.Nodes);
 
           for (int i = Start; i < Start + Items; i++)
           {
@@ -444,10 +451,10 @@ namespace CapturefineryViewExtension
               break;
             }
 
-            var parameters = hof.solutions[i];
-            for (var j = 0; j < hof.variables.Length; j++)
+            var parameters = toRun.solutions[i];
+            for (var j = 0; j < toRun.variables.Length; j++)
             {
-              SetDynamoInputParameter(nodeMap, hof.variables[j], parameters[hof.goals.Length + j]);
+              SetDynamoInputParameter(nodeMap, toRun.variables[j], parameters[toRun.goals.Length + j]);
             }
 
             waiting = true;
@@ -475,7 +482,7 @@ namespace CapturefineryViewExtension
           if (_createAnimations)
           {
             var levels = GetSortLevels();
-            var order = GetSolutionOrder(hof, levels);
+            var order = GetSolutionOrder(toRun, levels);
 
             var rootName = StripInvalidFileAndPathCharacters(_rootName);
 
