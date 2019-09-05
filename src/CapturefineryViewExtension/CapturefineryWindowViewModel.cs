@@ -328,9 +328,27 @@ namespace CapturefineryViewExtension
     public ObservableCollection<StudyInfo> GetRefineryTasks(string fileName)
     {
       var nodeList = new List<StudyInfo>();
-
       var i = 0;
+
+      // Older versions of Refinery store studies in a sub-folder of the graph's location
+
       var folder = fileName.Replace("dyn", "RefineryResults");
+      i = populateStudyList(folder, i, nodeList);
+
+      // Newer versions of Refinery store studies beneath the user's documents folder
+
+      var documentsPath = System.Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+      var graphName = System.IO.Path.GetFileNameWithoutExtension(fileName);
+      var path = documentsPath + "\\Refinery\\" + graphName + ".RefineryResults";
+      populateStudyList(path, i, nodeList);
+
+      // Return a bindable collection
+
+      return new ObservableCollection<StudyInfo>(nodeList);
+    }
+
+    private int populateStudyList(string folder, int i, List<StudyInfo> nodeList)
+    {
       if (System.IO.Directory.Exists(folder))
       {
         var start = folder.Length + 1;
@@ -339,10 +357,7 @@ namespace CapturefineryViewExtension
           nodeList.Add(new StudyInfo(++i, file.Substring(start), file));
         }
       }
-
-      // Return a bindable collection
-
-      return new ObservableCollection<StudyInfo>(nodeList);
+      return i;
     }
 
     public async Task RunTasks(StudyInfo study, HallOfFame hof, HallOfFame complete)
