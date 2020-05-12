@@ -342,6 +342,9 @@ namespace CapturefineryViewExtension
       var path = documentsPath + "\\Refinery\\" + graphName + ".RefineryResults";
       populateStudyList(path, i, nodeList);
 
+      var path2 = documentsPath + "\\AEC Generative Design\\." + graphName + ".RefineryResults";
+      populateStudyList(path2, i, nodeList);
+
       // Return a bindable collection
 
       return new ObservableCollection<StudyInfo>(nodeList);
@@ -627,11 +630,14 @@ namespace CapturefineryViewExtension
 
     public HallOfFame GetComplete(StudyInfo study, HallOfFame hof)
     {
-      var localFile = string.Format(@"Refinery\hof_hist-results-{0}.csv", study.Name);
-      var fileName = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        localFile
-      );
+      var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+      var localFile = string.Format(@"GenerativeDesign\hof_hist-results-{0}.csv", study.Name);
+      var fileName = Path.Combine(appData, localFile);
+      if (!File.Exists(fileName))
+      {
+        localFile = string.Format(@"Refinery\hof_hist-results-{0}.csv", study.Name); // Support old location
+        fileName = Path.Combine(appData, localFile);
+      }
       if (File.Exists(fileName))
       {
         var expected = hof.variables.Length + hof.goals.Length;
@@ -662,7 +668,7 @@ namespace CapturefineryViewExtension
             else
             {
               float empty;
-              if (values.All(s => float.TryParse(s, out empty)) && !lines.Contains(line))
+              if (values.All(s => (float.TryParse(s, out empty)) || s == "True" || s == "False") && !lines.Contains(line))
               {
                 lines.Add(line);
                 curGenSize++;
@@ -866,7 +872,7 @@ namespace CapturefineryViewExtension
         else if (node is BoolSelector)
         {
           var selector = (BoolSelector)node;
-          selector.Value = parameterValue == "1" || parameterValue == "true";
+          selector.Value = parameterValue == "1" || parameterValue.ToLower() == "true";
         }
       }
     }
